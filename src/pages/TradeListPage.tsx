@@ -21,6 +21,7 @@ const defaultFilters: TradeFiltersType = {
   symbol: '',
   position: '',
   status: '',
+  entryType: '',
   tags: [],
   searchNotes: '',
 };

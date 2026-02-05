@@ -49,10 +49,13 @@ export interface MarketDataMap {
 /**
  * Filter state for the trade table
  */
+export type EntryType = 'BUY' | 'SELL'; // Open leg: LONG = Buy, SHORT = Sell
+
 export interface TradeFilters {
   symbol: string;
   position: Position | '';
   status: TradeStatus | '';
+  entryType: EntryType | ''; // Entry (Buy/Sell): Buy = LONG, Sell = SHORT
   tags: string[];
   searchNotes: string;
 }

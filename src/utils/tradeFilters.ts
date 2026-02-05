@@ -16,6 +16,9 @@ export function filterTrades(trades: Trade[], filters: TradeFilters): Trade[] {
     if (filters.status && trade.status !== filters.status) {
       return false;
     }
+    if (filters.entryType && (filters.entryType === 'BUY' ? trade.position !== 'LONG' : trade.position !== 'SHORT')) {
+      return false;
+    }
     if (filters.tags.length > 0) {
       const tradeTags = trade.tags || [];
       const hasAll = filters.tags.every((tag) =>
