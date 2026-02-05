@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import type { Trade } from '../../types';
+import type { Trade, TradeStatus } from '../../types';
 
 interface CreateTradeFormProps {
   onSubmit: (trade: Trade) => void;
@@ -18,6 +18,7 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
   const now = Date.now();
   const [symbol, setSymbol] = useState('BTC');
   const [position, setPosition] = useState<'LONG' | 'SHORT'>('LONG');
+  const [status, setStatus] = useState<TradeStatus>('CLOSED');
   const [openTimestamp, setOpenTimestamp] = useState(now - 24 * 60 * 60 * 1000);
   const [closeTimestamp, setCloseTimestamp] = useState(now);
   const [openPrice, setOpenPrice] = useState('');
@@ -31,11 +32,15 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
     e.preventDefault();
 
     const op = parseFloat(openPrice);
-    const cp = parseFloat(closePrice);
+    const cp = closePrice.trim() ? parseFloat(closePrice) : NaN;
     const qty = parseFloat(quantity);
 
-    if (isNaN(op) || isNaN(cp) || isNaN(qty) || op <= 0 || cp <= 0 || qty <= 0) {
-      alert('Please enter valid open price, close price, and quantity');
+    if (isNaN(op) || isNaN(qty) || op <= 0 || qty <= 0) {
+      alert('Please enter valid open price and quantity');
+      return;
+    }
+    if (status === 'CLOSED' && (isNaN(cp) || cp <= 0)) {
+      alert('Please enter valid close price for closed trades');
       return;
     }
 
@@ -48,14 +53,18 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
       id: `trade-${Date.now()}`,
       symbol: symbol.toUpperCase(),
       position,
+      status,
       openTimestamp,
-      closeTimestamp,
       openPrice: op,
-      closePrice: cp,
       quantity: qty,
       notes: notes.trim() || undefined,
       tags: tags.length ? tags : undefined,
     };
+
+    if (status === 'CLOSED') {
+      trade.closeTimestamp = closeTimestamp;
+      trade.closePrice = cp;
+    }
 
     if (stopLoss.trim()) {
       const sl = parseFloat(stopLoss);
@@ -110,6 +119,20 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
             </select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status *
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TradeStatus)}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            >
+              <option value="OPEN">Open (still holding)</option>
+              <option value="CLOSED">Closed (exited)</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -124,13 +147,14 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Close Time *
+                Close Time {status === 'CLOSED' ? '*' : '(optional)'}
               </label>
               <input
                 type="datetime-local"
                 value={toDateLocal(closeTimestamp)}
                 onChange={(e) => setCloseTimestamp(fromDateLocal(e.target.value))}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                disabled={status === 'OPEN'}
+                className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100"
               />
             </div>
           </div>
@@ -151,15 +175,16 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Close Price *
+                Close Price {status === 'CLOSED' ? '*' : '(optional)'}
               </label>
               <input
                 type="number"
                 step="any"
                 value={closePrice}
                 onChange={(e) => setClosePrice(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                required
+                disabled={status === 'OPEN'}
+                className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100"
+                required={status === 'CLOSED'}
               />
             </div>
             <div>

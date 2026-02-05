@@ -20,6 +20,7 @@ import { mockTrades } from '../data/mockTrades';
 const defaultFilters: TradeFiltersType = {
   symbol: '',
   position: '',
+  status: '',
   tags: [],
   searchNotes: '',
 };
@@ -34,9 +35,10 @@ export const TradeListPage: React.FC = () => {
 
   const { data: marketData, isLoading, error } = useMarketData(symbols);
 
-  const [filters, setFilters] = useState<TradeFiltersType>(
-    () => loadFilters() ?? defaultFilters
-  );
+  const [filters, setFilters] = useState<TradeFiltersType>(() => {
+    const loaded = loadFilters();
+    return loaded ? { ...defaultFilters, ...loaded } : defaultFilters;
+  });
 
   const handleFiltersChange = useCallback((f: TradeFiltersType) => {
     setFilters(f);

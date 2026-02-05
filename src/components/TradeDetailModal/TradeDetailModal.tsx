@@ -15,7 +15,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from 'recharts';
-import type { Trade } from '../../types';
+import type { Trade, Position } from '../../types';
 import {
   calculatePnL,
   formatDuration,
@@ -28,20 +28,27 @@ interface TradeDetailModalProps {
   onUpdate?: (id: string, updates: Partial<Trade>) => void;
 }
 
+function getOpenLegLabel(position: Position): string {
+  return position === 'LONG' ? 'Buy' : 'Sell';
+}
+function getCloseLegLabel(position: Position): string {
+  return position === 'LONG' ? 'Sell' : 'Buy';
+}
+
 /**
  * Generate mock price series for chart (entry to exit with open/close markers)
  */
 function buildChartData(trade: Trade) {
   const points: { time: string; price: number; label?: string }[] = [];
   const start = trade.openTimestamp;
-  const end = trade.closeTimestamp;
+  const end = trade.closeTimestamp ?? Date.now();
+  const closePrice = trade.closePrice ?? trade.openPrice;
   const steps = 20;
 
   for (let i = 0; i <= steps; i++) {
     const t = start + (i / steps) * (end - start);
     const progress = i / steps;
-    const price =
-      trade.openPrice + (trade.closePrice - trade.openPrice) * progress;
+    const price = trade.openPrice + (closePrice - trade.openPrice) * progress;
     points.push({
       time: new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       price,
@@ -70,19 +77,16 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
 
   if (!trade) return null;
 
-  const pnl = calculatePnL(
-    trade.position,
-    trade.openPrice,
-    trade.closePrice,
-    trade.quantity
-  );
-  const duration = formatDuration(trade.openTimestamp, trade.closeTimestamp);
-  const rMultiple = calculateRMultiple(
-    pnl,
-    trade.openPrice,
-    trade.stopLoss,
-    trade.quantity
-  );
+  const isClosed = trade.status === 'CLOSED' && trade.closePrice != null;
+  const pnl = isClosed
+    ? calculatePnL(trade.position, trade.openPrice, trade.closePrice!, trade.quantity)
+    : null;
+  const duration = isClosed && trade.closeTimestamp != null
+    ? formatDuration(trade.openTimestamp, trade.closeTimestamp)
+    : null;
+  const rMultiple = pnl != null
+    ? calculateRMultiple(pnl, trade.openPrice, trade.stopLoss, trade.quantity)
+    : null;
 
   const chartData = useMemo(() => buildChartData(trade), [trade]);
 
@@ -96,9 +100,20 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {trade.symbol} {trade.position}
-          </h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {trade.symbol} {trade.position}
+            </h2>
+            <span
+              className={`inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded ${
+                trade.status === 'OPEN'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {trade.status}
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -111,12 +126,14 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           {/* Trade summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-500">Open</div>
+              <div className="text-sm text-gray-500">Open ({getOpenLegLabel(trade.position)})</div>
               <div className="font-semibold">{trade.openPrice.toLocaleString()}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-500">Close</div>
-              <div className="font-semibold">{trade.closePrice.toLocaleString()}</div>
+              <div className="text-sm text-gray-500">Close ({getCloseLegLabel(trade.position)})</div>
+              <div className="font-semibold">
+                {trade.closePrice != null ? trade.closePrice.toLocaleString() : '—'}
+              </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-sm text-gray-500">Quantity</div>
@@ -124,7 +141,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-sm text-gray-500">Duration</div>
-              <div className="font-semibold">{duration}</div>
+              <div className="font-semibold">{duration ?? '—'}</div>
             </div>
           </div>
 
@@ -133,11 +150,14 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
               <div className="text-sm text-gray-500">PNL</div>
               <div
                 className={`font-bold text-xl ${
-                  pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                  pnl != null
+                    ? pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                    : 'text-gray-500'
                 }`}
               >
-                {pnl >= 0 ? '+' : ''}
-                {pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {pnl != null
+                  ? `${pnl >= 0 ? '+' : ''}${pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  : '—'}
               </div>
             </div>
             {rMultiple != null && (
@@ -179,12 +199,14 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                     strokeDasharray="4 4"
                     label={{ value: 'Entry', position: 'right' }}
                   />
-                  <ReferenceLine
-                    y={trade.closePrice}
-                    stroke="#ef4444"
-                    strokeDasharray="4 4"
-                    label={{ value: 'Exit', position: 'right' }}
-                  />
+                  {trade.closePrice != null && (
+                    <ReferenceLine
+                      y={trade.closePrice}
+                      stroke="#ef4444"
+                      strokeDasharray="4 4"
+                      label={{ value: 'Exit', position: 'right' }}
+                    />
+                  )}
                   <Line
                     type="monotone"
                     dataKey="price"

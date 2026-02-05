@@ -13,7 +13,11 @@ export const tradeStorageService = {
     try {
       const serialized = localStorage.getItem(STORAGE_KEY);
       if (serialized === null) return [];
-      return JSON.parse(serialized) as Trade[];
+      const trades = JSON.parse(serialized) as Trade[];
+      return trades.map((t) => ({
+        ...t,
+        status: t.status ?? 'CLOSED',
+      }));
     } catch (error) {
       console.error('Failed to load trades from localStorage:', error);
       return [];

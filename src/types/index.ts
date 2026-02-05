@@ -5,14 +5,17 @@
 
 export type Position = 'LONG' | 'SHORT';
 
+export type TradeStatus = 'OPEN' | 'CLOSED';
+
 export interface Trade {
   id: string;
   symbol: string; // BTC, ETH, etc.
   position: Position;
+  status: TradeStatus; // OPEN = still holding, CLOSED = exited
   openTimestamp: number;
-  closeTimestamp: number;
+  closeTimestamp?: number; // Optional for OPEN trades
   openPrice: number;
-  closePrice: number;
+  closePrice?: number; // Optional for OPEN trades
   quantity: number;
   stopLoss?: number;
   rValue?: number;
@@ -49,6 +52,7 @@ export interface MarketDataMap {
 export interface TradeFilters {
   symbol: string;
   position: Position | '';
+  status: TradeStatus | '';
   tags: string[];
   searchNotes: string;
 }

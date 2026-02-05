@@ -13,6 +13,9 @@ export function filterTrades(trades: Trade[], filters: TradeFilters): Trade[] {
     if (filters.position && trade.position !== filters.position) {
       return false;
     }
+    if (filters.status && trade.status !== filters.status) {
+      return false;
+    }
     if (filters.tags.length > 0) {
       const tradeTags = trade.tags || [];
       const hasAll = filters.tags.every((tag) =>

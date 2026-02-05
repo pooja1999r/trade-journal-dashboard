@@ -75,6 +75,27 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
         </select>
       </div>
 
+      {/* Status filter (Open / Closed) */}
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1">
+          Status
+        </label>
+        <select
+          value={filters.status}
+          onChange={(e) =>
+            onFiltersChange({
+              ...filters,
+              status: e.target.value as 'OPEN' | 'CLOSED' | '',
+            })
+          }
+          className="border border-gray-300 rounded px-3 py-2 text-sm"
+        >
+          <option value="">All</option>
+          <option value="OPEN">Open</option>
+          <option value="CLOSED">Closed</option>
+        </select>
+      </div>
+
       {/* Tags multi-select */}
       <div className="flex-1">
         <label className="block text-xs font-medium text-gray-500 mb-1">Tags</label>
