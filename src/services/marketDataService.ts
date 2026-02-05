@@ -5,7 +5,7 @@
  * Falls back to mock data when API is unavailable (e.g. no VITE_API_URL).
  */
 
-import type { MarketDataApiResponse, MarketDataMap } from '../types';
+import type { MarketDataMap } from '../types';
 import { getMockMarketData } from '../utils/mockMarketData';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -27,13 +27,13 @@ export async function fetchMarketData(symbols: string[]): Promise<MarketDataMap>
   }
 
   try {
-    const symbolParam = normalizedSymbols.join(',');
-    const url = `${API_URL}?symbols=${encodeURIComponent(symbolParam)}`;
+    // FreeCryptoAPI: ?symbol=BTC or ?symbol=BTC+ETH
+    const symbolParam = normalizedSymbols.join('+');
+    const url = `${API_URL}?symbol=${encodeURIComponent(symbolParam)}`;
 
     const response = await fetch(url, {
       headers: {
         Authorization: API_KEY ? `Bearer ${API_KEY}` : '',
-        'Content-Type': 'application/json',
       },
     });
 
@@ -41,15 +41,26 @@ export async function fetchMarketData(symbols: string[]): Promise<MarketDataMap>
       throw new Error(`Market data API error: ${response.status}`);
     }
 
-    const json: MarketDataApiResponse = await response.json();
+    const json = await response.json();
 
-    if (json.status !== 'success' || !json.symbols) {
-      throw new Error('Invalid market data response');
-    }
-
+    // Adapt FreeCryptoAPI response (price, change_24h) to our MarketDataMap
     const map: MarketDataMap = {};
-    for (const item of json.symbols) {
-      map[item.symbol.toUpperCase()] = item;
+    const items = Array.isArray(json) ? json : json?.data ?? json?.symbols ?? [];
+    for (const item of items) {
+      const symbol = (item.symbol || item.Symbol || '').toUpperCase();
+      if (!symbol) continue;
+      map[symbol] = {
+        symbol,
+        last: String(item.last ?? item.price ?? item.Last ?? item.Price ?? 0),
+        last_btc: '1',
+        lowest: String(item.lowest ?? item.low ?? item.Last ?? item.price ?? 0),
+        highest: String(item.highest ?? item.high ?? item.Last ?? item.price ?? 0),
+        date: item.date ?? item.Date ?? new Date().toISOString(),
+        daily_change_percentage: String(
+          item.daily_change_percentage ?? item.change_24h ?? item.change ?? 0
+        ),
+        source_exchange: item.source_exchange ?? item.exchange ?? 'unknown',
+      };
     }
 
     return map;
