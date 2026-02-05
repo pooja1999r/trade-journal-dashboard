@@ -1,64 +1,66 @@
 /**
- * Trade Calculation Utilities
- * 
- * Helper functions for calculating trade metrics and statistics.
- * These are pure functions with no side effects.
+ * Trade calculation utilities
+ * Pure functions for PNL, duration, R-multiple
  */
 
-import { Trade, TradeLeg } from '../store/types';
+import type { Position } from '../types';
 
 /**
- * Calculate total quantity from an array of legs
+ * PNL calculation:
+ * LONG  → (closePrice - openPrice) × quantity
+ * SHORT → (openPrice - closePrice) × quantity
  */
-export const calculateTotalQuantity = (legs: TradeLeg[]): number => {
-  return legs.reduce((sum, leg) => sum + leg.quantity, 0);
-};
-
-/**
- * Calculate weighted average price from an array of legs
- */
-export const calculateAveragePrice = (legs: TradeLeg[]): number => {
-  if (legs.length === 0) return 0;
-  
-  const totalValue = legs.reduce((sum, leg) => sum + (leg.price * leg.quantity), 0);
-  const totalQuantity = calculateTotalQuantity(legs);
-  
-  return totalQuantity > 0 ? totalValue / totalQuantity : 0;
-};
-
-/**
- * Calculate total value (price * quantity) for all legs
- */
-export const calculateTotalValue = (legs: TradeLeg[]): number => {
-  return legs.reduce((sum, leg) => sum + (leg.price * leg.quantity), 0);
-};
-
-/**
- * Calculate P&L for a trade
- * For LONG positions: (Sell Value - Buy Value)
- * For SHORT positions: (Buy Value - Sell Value)
- */
-export const calculatePnL = (trade: Trade): number => {
-  const buyValue = calculateTotalValue(trade.buyLegs);
-  const sellValue = calculateTotalValue(trade.sellLegs);
-  
-  if (trade.direction === 'LONG') {
-    return sellValue - buyValue;
-  } else {
-    return buyValue - sellValue;
+export function calculatePnL(
+  position: Position,
+  openPrice: number,
+  closePrice: number,
+  quantity: number
+): number {
+  if (position === 'LONG') {
+    return (closePrice - openPrice) * quantity;
   }
-};
+  return (openPrice - closePrice) * quantity;
+}
 
 /**
- * Format currency with proper decimal places
+ * Total duration in milliseconds
  */
-export const formatCurrency = (value: number): string => {
-  return value.toFixed(2);
-};
+export function getDurationMs(openTimestamp: number, closeTimestamp: number): number {
+  return closeTimestamp - openTimestamp;
+}
 
 /**
- * Format percentage
+ * Human-readable duration (e.g., "2h 15m", "3d 4h")
  */
-export const formatPercentage = (value: number): string => {
-  return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
-};
+export function formatDuration(openTimestamp: number, closeTimestamp: number): string {
+  const ms = getDurationMs(openTimestamp, closeTimestamp);
+  if (ms < 0) return '0m';
+
+  const minutes = Math.floor(ms / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  const parts: string[] = [];
+
+  if (days > 0) parts.push(`${days}d`);
+  if (hours % 24 > 0) parts.push(`${hours % 24}h`);
+  if (minutes % 60 > 0 || parts.length === 0) parts.push(`${minutes % 60}m`);
+
+  return parts.join(' ');
+}
+
+/**
+ * R-Multiple: PNL ÷ (risk per trade)
+ * Risk = |openPrice - stopLoss| × quantity (if stopLoss present)
+ */
+export function calculateRMultiple(
+  pnl: number,
+  openPrice: number,
+  stopLoss: number | undefined,
+  quantity: number
+): number | null {
+  if (stopLoss === undefined || stopLoss === 0) return null;
+  const risk = Math.abs(openPrice - stopLoss) * quantity;
+  if (risk === 0) return null;
+  return pnl / risk;
+}

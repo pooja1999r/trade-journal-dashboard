@@ -1,0 +1,50 @@
+/**
+ * Mock trades for development
+ */
+
+import type { Trade } from '../types';
+
+export const mockTrades: Trade[] = [
+  {
+    id: '1',
+    symbol: 'BTC',
+    position: 'LONG',
+    openTimestamp: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    closeTimestamp: Date.now() - 1 * 24 * 60 * 60 * 1000,
+    openPrice: 62000,
+    closePrice: 63500,
+    quantity: 0.5,
+    stopLoss: 60000,
+    rValue: 2.5,
+    notes: 'Strong breakout above resistance. Took profits at target.',
+    tags: ['breakout', 'swing'],
+  },
+  {
+    id: '2',
+    symbol: 'ETH',
+    position: 'SHORT',
+    openTimestamp: Date.now() - 5 * 60 * 60 * 1000,
+    closeTimestamp: Date.now() - 2 * 60 * 60 * 1000,
+    openPrice: 3500,
+    closePrice: 3450,
+    quantity: 2,
+    stopLoss: 3650,
+    rValue: 1.3,
+    notes: 'Short at resistance, closed on support.',
+    tags: ['scalp'],
+  },
+  {
+    id: '3',
+    symbol: 'BTC',
+    position: 'LONG',
+    openTimestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
+    closeTimestamp: Date.now() - 4 * 24 * 60 * 60 * 1000,
+    openPrice: 58000,
+    closePrice: 61000,
+    quantity: 0.25,
+    stopLoss: 56000,
+    rValue: 1.5,
+    notes: 'DCA entry on dip.',
+    tags: ['swing', 'DCA'],
+  },
+];

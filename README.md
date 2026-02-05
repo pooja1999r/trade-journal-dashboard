@@ -1,10 +1,10 @@
 # Trade Journal
 
-A production-quality React application for tracking and managing trading positions with multiple buy and sell legs.
+A production-quality React application for tracking crypto trades with live market data integration.
 
 ## 📋 Overview
 
-Trade Journal is a frontend application designed for traders to record, visualize, and manage their trading positions. Each trade can contain multiple entry (buy) and exit (sell) points, providing a complete picture of trading activity.
+Trade Journal is a frontend application for traders to record, visualize, and manage trading positions. It fetches **live market data** from a crypto price API for symbols stored in localStorage, merging it with user-recorded trade data. Trades support LONG/SHORT positions with open/close prices, PNL, R-multiple, and more.
 
 The application emphasizes:
 - **Clean state modeling** with normalized data structures
@@ -16,32 +16,37 @@ The application emphasizes:
 
 ### Core Features
 - **Trade Management**
-  - Create trades with multiple buy and sell legs
-  - Track long and short positions
-  - Distinguish between open and closed trades
-  - Add notes to trades for context
+  - Create trades with symbol, position (LONG/SHORT), open/close timestamps and prices
+  - Stop loss, R-value, notes, tags
+  - Editable notes and tags in detail modal
 
-- **Three-Column Layout**
-  - Buy legs displayed in left column (green)
-  - Trade details in center column (gray)
-  - Sell legs displayed in right column (red)
-  - Visual separation for quick scanning
+- **Trade Table**
+  - Symbol, Position, Open/Close Time, Duration
+  - Open/Close Price, PNL (green/red), R-Value, Stop Loss
+  - Tags, Notes
+  - **Current Market Price** and Daily % Change from API
+  - Sorted by openTimestamp (latest first)
 
-- **Trade Calculations**
-  - Total buy/sell quantities
-  - Weighted average prices
-  - Profit & Loss for closed trades
-  - Real-time calculations
+- **Derived Fields**
+  - PNL: LONG → (closePrice − openPrice) × quantity; SHORT → (openPrice − closePrice) × quantity
+  - Human-readable duration (e.g. 2h 15m)
+  - R-Multiple: PNL ÷ risk per trade
 
-- **Data Persistence**
-  - Automatic localStorage persistence
-  - State hydration on app load
-  - Demo data available for testing
+- **Market Data**
+  - Fetches live prices only for symbols in localStorage
+  - API key via Authorization header
+  - Falls back to mock data when API not configured
+  - Batched/parallel requests
 
-- **Filtering & Sorting**
-  - Filter by status (All, Open, Closed)
-  - Sort by creation date
-  - Trade statistics dashboard
+- **Filters & Search**
+  - Filter by symbol, position (LONG/SHORT), tags (multi-select)
+  - Search by notes text
+  - Filters persisted in localStorage
+
+- **Trade Detail Modal**
+  - Row click opens modal with trade summary
+  - Entry & exit markers on line chart (Recharts)
+  - Editable notes & tags
 
 ## 🛠️ Tech Stack
 
@@ -57,25 +62,31 @@ The application emphasizes:
 
 ```
 src/
-├── components/           # Reusable UI components
-│   ├── TradeCard/       # Three-column trade display
-│   ├── TradeLegList/    # Buy/sell leg visualization
-│   ├── TradeForm/       # Create trade modal
-│   └── Layout/          # Header and layout components
-├── pages/               # Page-level components
-│   └── TradeList.tsx    # Main trade list page
-├── store/               # Redux state management
-│   ├── types.ts         # TypeScript type definitions
-│   ├── tradeSlice.ts    # Trade actions and reducers
-│   ├── store.ts         # Store configuration
-│   └── hooks.ts         # Typed Redux hooks
-├── utils/               # Utility functions
-│   ├── storage.ts       # localStorage persistence
-│   ├── calculations.ts  # Trade calculations
-│   └── mockData.ts      # Demo data
-├── App.tsx              # Root component
-├── main.tsx             # Entry point
-└── index.css            # Global styles
+├── components/
+│   ├── TradeTable/        # Main trade table with all columns
+│   ├── TradeFilters/      # Symbol, position, tags, search
+│   ├── TradeDetailModal/  # Detail view with chart (Recharts)
+│   └── CreateTradeForm/   # Create trade modal
+├── pages/
+│   └── TradeListPage.tsx  # Main page
+├── services/
+│   ├── tradeStorageService.ts   # localStorage (key: trade_journal_trades)
+│   └── marketDataService.ts     # Crypto price API
+├── hooks/
+│   ├── useTrades.ts       # Trade state + localStorage sync
+│   └── useMarketData.ts   # Fetch market data for trade symbols
+├── types/
+│   └── index.ts           # Trade, MarketData, filters
+├── utils/
+│   ├── calculations.ts    # PNL, duration, R-multiple
+│   ├── tradeFilters.ts    # Client-side filtering
+│   ├── filterStorage.ts   # Persist filters
+│   └── mockMarketData.ts  # Fallback when API unavailable
+├── data/
+│   └── mockTrades.ts      # Demo trades
+├── App.tsx
+├── main.tsx
+└── index.css
 ```
 
 ## 🚀 Getting Started
@@ -87,17 +98,39 @@ src/
 ### Installation
 
 ```bash
-# Clone the repository (or extract the zip)
 cd stock-notes
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
 The application will be available at `http://localhost:5173`
+
+### API Configuration (Optional)
+
+To use live market data, create `.env` and set:
+
+```
+VITE_API_URL=https://your-api.com/crypto/prices
+VITE_API_KEY=your-api-key
+```
+
+API must return data in this shape:
+
+```json
+{
+  "status": "success",
+  "symbols": [
+    {
+      "symbol": "BTC",
+      "last": "63556.38",
+      "daily_change_percentage": "-13.53",
+      ...
+    }
+  ]
+}
+```
+
+When not configured, **mock data** is used.
 
 ### Building for Production
 
