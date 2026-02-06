@@ -2,11 +2,22 @@
  * Trade Storage Service
  * Handles localStorage persistence for trades under key: trade_journal_trades
  * Keeps persistence logic separate from UI
+ * Syncs trade_journal_symbols to only contain symbols present in trades
  */
 
 import { Trade } from '../components/constants/types';
 
 const STORAGE_KEY = 'trade_journal_trades';
+const SYMBOLS_KEY = 'trade_journal_symbols';
+
+function syncSymbolsFromTrades(trades: Trade[]): void {
+  const symbols = new Set(trades.map((t) => t.symbol.toUpperCase()));
+  try {
+    localStorage.setItem(SYMBOLS_KEY, JSON.stringify(Array.from(symbols)));
+  } catch {
+    // ignore
+  }
+}
 
 export const tradeStorageService = {
   getAll(): Trade[] {
@@ -27,9 +38,14 @@ export const tradeStorageService = {
   save(trades: Trade[]): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+      syncSymbolsFromTrades(trades);
     } catch (error) {
       console.error('Failed to save trades to localStorage:', error);
     }
+  },
+
+  syncSymbolsFromTrades(trades: Trade[]): void {
+    syncSymbolsFromTrades(trades);
   },
 
   getUniqueSymbols(trades: Trade[]): string[] {

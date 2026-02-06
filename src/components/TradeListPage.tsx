@@ -89,6 +89,8 @@ export const TradeListPage: React.FC = () => {
   const handleCreateTrade = useCallback(
     (trade: Trade) => {
       addTrade(trade);
+      localStorage.setItem(DEMO_LOADED_KEY, 'true');
+      setDemoLoaded(true);
       setShowCreateForm(false);
       loadTrades();
     },
@@ -96,14 +98,15 @@ export const TradeListPage: React.FC = () => {
   );
 
   const handleLoadDemoConfirm = useCallback(() => {
-    mockTrades.forEach((t, i) =>
-      addTrade({ ...t, id: `trade-${Date.now()}-${i}` })
-    );
+    const currentTrades = tradeStorageService.getAll();
+    const newTrades = mockTrades.map((t, i) => ({ ...t, id: `trade-${Date.now()}-${i}` }));
+    const allTrades = [...currentTrades, ...newTrades];
+    tradeStorageService.save(allTrades);
     localStorage.setItem(DEMO_LOADED_KEY, 'true');
     setDemoLoaded(true);
     setShowLoadDemoConfirm(false);
     loadTrades();
-  }, [addTrade, loadTrades]);
+  }, [loadTrades]);
 
   return (
     <div className="min-h-screen bg-gray-100">

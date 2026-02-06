@@ -7,7 +7,7 @@ import type { Trade } from '../components/constants/types';
 export const mockTrades: Trade[] = [
   {
     id: '1',
-    symbol: 'BTC',
+    symbol: 'BTCUSDT',
     position: 'LONG',
     status: 'CLOSED',
     openTimestamp: Date.now() - 2 * 24 * 60 * 60 * 1000,
@@ -22,7 +22,7 @@ export const mockTrades: Trade[] = [
   },
   {
     id: '2',
-    symbol: 'ETH',
+    symbol: 'ETHUSDT',
     position: 'SHORT',
     status: 'CLOSED',
     openTimestamp: Date.now() - 5 * 60 * 60 * 1000,
@@ -37,7 +37,7 @@ export const mockTrades: Trade[] = [
   },
   {
     id: '3',
-    symbol: 'BTC',
+    symbol: 'BTCUSDT',
     position: 'LONG',
     status: 'CLOSED',
     openTimestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
@@ -52,7 +52,7 @@ export const mockTrades: Trade[] = [
   },
   {
     id: '4',
-    symbol: 'SOL',
+    symbol: 'SOLUSDT',
     position: 'LONG',
     status: 'OPEN',
     openTimestamp: Date.now() - 12 * 60 * 60 * 1000,

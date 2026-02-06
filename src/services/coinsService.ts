@@ -1,6 +1,6 @@
 /**
  * Trading symbols service
- * Loads symbol list from localStorage (hardcoded defaults)
+ * Fetches symbol list from Binance API
  */
 
 export interface TradingSymbol {
@@ -8,31 +8,11 @@ export interface TradingSymbol {
   symbol: string;
 }
 
-const STORAGE_KEY = 'trade_journal_symbols';
-
-const DEFAULT_SYMBOLS = ['ETHBTC', 'LTCBTC', 'BNBBTC', 'NEOBTC', 'QTUMETH'];
-
-function getDefaultTradingSymbols(): TradingSymbol[] {
-  return DEFAULT_SYMBOLS.map((s) => ({ id: s, symbol: s }));
-}
-
-function loadFromStorage(): TradingSymbol[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as string[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((s) => ({ id: s, symbol: s }));
-      }
-    }
-  } catch {
-    // ignore parse errors
-  }
-  const defaults = getDefaultTradingSymbols();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SYMBOLS));
-  return defaults;
-}
+const BINANCE_API = 'https://api.binance.com/api/v3/exchangeInfo';
 
 export async function fetchCoinsList(): Promise<TradingSymbol[]> {
-  return Promise.resolve(loadFromStorage());
+  const res = await fetch(BINANCE_API);
+  const data = await res.json();
+  const symbols = (data.symbols ?? []).map((s: { symbol: string }) => s.symbol);
+  return symbols.map((sym: string) => ({ id: sym, symbol: sym }));
 }

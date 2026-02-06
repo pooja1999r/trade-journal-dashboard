@@ -41,6 +41,7 @@ export function useTrades() {
   }, []);
 
   useEffect(() => {
+    tradeStorageService.syncSymbolsFromTrades(tradeStorageService.getAll());
     loadTrades();
   }, [loadTrades]);
 
