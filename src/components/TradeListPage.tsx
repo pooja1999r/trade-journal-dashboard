@@ -7,14 +7,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useTrades } from '../hooks/useTrades';
 import { useMarketData } from '../hooks/useMarketData';
-import { TradeTable } from '../components/TradeTable/TradeTable';
-import { TradeFilters } from '../components/TradeFilters/TradeFilters';
-import { TradeDetailModal } from '../components/TradeDetailModal/TradeDetailModal';
-import { CreateTradeForm } from '../components/CreateTradeForm/CreateTradeForm';
+import { TradeTable } from './TradeTable';
+import { TradeFilters } from './TradeFilters';
+import { TradeDetailModal } from './TradeDetailModal';
+import { CreateTradeForm } from './CreateTradeForm';
 import { filterTrades, sortTradesByOpenTimestamp } from '../utils/tradeFilters';
 import { tradeStorageService } from '../services/tradeStorageService';
 import { loadFilters, saveFilters } from '../utils/filterStorage';
-import type { Trade, TradeFilters as TradeFiltersType } from '../types';
+import type { Trade, TradeFilters as TradeFiltersType } from './constants/types';
 import { mockTrades } from '../data/mockTrades';
 
 const defaultFilters: TradeFiltersType = {

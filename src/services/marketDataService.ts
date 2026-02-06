@@ -5,7 +5,7 @@
  * Falls back to mock data when API is unavailable (e.g. no VITE_API_URL).
  */
 
-import type { MarketDataMap } from '../types';
+import type { MarketDataMap } from '../components/constants/types';
 import { getMockMarketData } from '../utils/mockMarketData';
 
 const API_URL = import.meta.env.VITE_API_URL || '';

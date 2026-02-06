@@ -3,7 +3,7 @@
  * Used when fetchMarketData fails or VITE_API_URL is not set.
  */
 
-import type { MarketDataMap } from '../types';
+import type { MarketDataMap } from '../components/constants/types';
 
 const MOCK_PRICES: Record<string, { last: number; change: number }> = {
   BTC: { last: 63556.38, change: -13.53 },

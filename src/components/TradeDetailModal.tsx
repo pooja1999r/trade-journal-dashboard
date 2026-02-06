@@ -15,12 +15,12 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from 'recharts';
-import type { Trade, Position } from '../../types';
+import type { Trade, Position } from './constants/types';
 import {
   calculatePnL,
   formatDuration,
   calculateRMultiple,
-} from '../../utils/calculations';
+} from '../utils/calculations';
 
 interface TradeDetailModalProps {
   trade: Trade | null;

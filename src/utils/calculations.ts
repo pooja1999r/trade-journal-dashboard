@@ -3,7 +3,7 @@
  * Pure functions for PNL, duration, R-multiple
  */
 
-import type { Position } from '../types';
+import type { Position } from '../components/constants/types';
 
 /**
  * PNL calculation:

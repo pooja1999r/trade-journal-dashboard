@@ -3,7 +3,7 @@
  * Renders TradeListPage with full trade + market data flow.
  */
 
-import { TradeListPage } from './pages/TradeListPage';
+import { TradeListPage } from './components/TradeListPage';
 
 function App() {
   return <TradeListPage />;

@@ -1,6 +1,6 @@
 /**
  * Header Component
- * 
+ *
  * Application header with title and primary actions.
  */
 

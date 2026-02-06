@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Trade } from '../types';
+import { Trade } from '../components/constants/types';
 import { tradeStorageService } from '../services/tradeStorageService';
 
 export function useTrades() {

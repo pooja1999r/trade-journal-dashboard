@@ -5,15 +5,13 @@
  */
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import type { Trade, TradeFilters as TradeFiltersType } from '../../types';
+import type { Trade, TradeFilters as TradeFiltersType, DropdownKey } from './constants/types';
 
 interface TradeFiltersProps {
   trades: Trade[];
   filters: TradeFiltersType;
   onFiltersChange: (f: TradeFiltersType) => void;
 }
-
-type DropdownKey = 'symbol' | 'position' | 'status' | 'entry' | 'tags';
 
 export const TradeFilters: React.FC<TradeFiltersProps> = ({
   trades,

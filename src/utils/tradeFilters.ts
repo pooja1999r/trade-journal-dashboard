@@ -3,7 +3,7 @@
  * Performant filter logic separate from UI
  */
 
-import type { Trade, TradeFilters } from '../types';
+import { ENTRY_TYPE, POSITION, type Trade, type TradeFilters } from '../components/constants/types';
 
 export function filterTrades(trades: Trade[], filters: TradeFilters): Trade[] {
   return trades.filter((trade) => {
@@ -16,7 +16,7 @@ export function filterTrades(trades: Trade[], filters: TradeFilters): Trade[] {
     if (filters.status && trade.status !== filters.status) {
       return false;
     }
-    if (filters.entryType && (filters.entryType === 'BUY' ? trade.position !== 'LONG' : trade.position !== 'SHORT')) {
+    if (filters.entryType && (filters.entryType === ENTRY_TYPE.BUY ? trade.position !== POSITION.LONG : trade.position !== POSITION.SHORT)) {
       return false;
     }
     if (filters.tags.length > 0) {

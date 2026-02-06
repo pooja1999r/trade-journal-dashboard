@@ -2,7 +2,7 @@
  * Persist filters to localStorage
  */
 
-import type { TradeFilters } from '../types';
+import type { TradeFilters } from '../components/constants/types';
 
 const KEY = 'trade_journal_filters';
 

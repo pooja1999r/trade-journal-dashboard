@@ -5,8 +5,8 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import type { Trade, TradeStatus } from '../../types';
-import { useCoins } from '../../hooks/useCoins';
+import type { Trade, TradeStatus } from './constants/types';
+import { useCoins } from '../hooks/useCoins';
 
 interface CreateTradeFormProps {
   onSubmit: (trade: Trade) => void;

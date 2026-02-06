@@ -2,7 +2,7 @@
  * Mock trades for development
  */
 
-import type { Trade } from '../types';
+import type { Trade } from '../components/constants/types';
 
 export const mockTrades: Trade[] = [
   {

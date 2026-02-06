@@ -5,12 +5,12 @@
  */
 
 import React from 'react';
-import type { Trade, MarketDataMap, Position } from '../../types';
+import type { Trade, MarketDataMap, Position } from './constants/types';
 import {
   calculatePnL,
   formatDuration,
   calculateRMultiple,
-} from '../../utils/calculations';
+} from '../utils/calculations';
 
 interface TradeTableProps {
   trades: Trade[];

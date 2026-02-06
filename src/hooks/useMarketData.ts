@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { MarketDataMap } from '../types';
+import type { MarketDataMap } from '../components/constants/types';
 import { fetchMarketData } from '../services/marketDataService';
 
 const POLL_INTERVAL_MS = 60000; // 1 minute

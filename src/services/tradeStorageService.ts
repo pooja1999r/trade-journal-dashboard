@@ -4,7 +4,7 @@
  * Keeps persistence logic separate from UI
  */
 
-import { Trade } from '../types';
+import { Trade } from '../components/constants/types';
 
 const STORAGE_KEY = 'trade_journal_trades';
 
