@@ -1,22 +1,62 @@
 /**
  * CreateTradeForm Component
  * Form for creating new trades with the new schema.
+ * Symbol selector fetches from CoinGecko and supports search.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Trade, TradeStatus } from '../../types';
+import { useCoins } from '../../hooks/useCoins';
 
 interface CreateTradeFormProps {
   onSubmit: (trade: Trade) => void;
   onCancel: () => void;
+  existingTags?: string[]; // Tags from all existing trades
 }
+
+const DISPLAY_LIMIT = 80;
 
 export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
   onSubmit,
   onCancel,
+  existingTags = [],
 }) => {
   const now = Date.now();
+  const { coins, isLoading, error } = useCoins();
   const [symbol, setSymbol] = useState('BTC');
+  const [symbolSearch, setSymbolSearch] = useState('');
+  const [symbolDropdownOpen, setSymbolDropdownOpen] = useState(false);
+  const symbolRef = useRef<HTMLDivElement>(null);
+
+  const filteredCoins = useMemo(() => {
+    if (!symbolSearch.trim()) return coins.slice(0, DISPLAY_LIMIT);
+    const q = symbolSearch.toLowerCase().trim();
+    return coins
+      .filter(
+        (c) =>
+          c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+      )
+      .slice(0, DISPLAY_LIMIT);
+  }, [coins, symbolSearch]);
+
+  const selectedCoin = useMemo(
+    () => coins.find((c) => c.symbol.toUpperCase() === symbol.toUpperCase()),
+    [coins, symbol]
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (symbolRef.current && !symbolRef.current.contains(target)) {
+        setSymbolDropdownOpen(false);
+      }
+      if (tagsRef.current && !tagsRef.current.contains(target)) {
+        setTagsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [position, setPosition] = useState<'LONG' | 'SHORT'>('LONG');
   const [status, setStatus] = useState<TradeStatus>('CLOSED');
   const [openTimestamp, setOpenTimestamp] = useState(now - 24 * 60 * 60 * 1000);
@@ -26,7 +66,18 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
   const [quantity, setQuantity] = useState('');
   const [stopLoss, setStopLoss] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagsInput, setTagsInput] = useState('');
+  const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
+  const tagsRef = useRef<HTMLDivElement>(null);
+
+  const addTagFromInput = () => {
+    const trimmed = tagsInput.trim();
+    if (trimmed && !selectedTags.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
+      setSelectedTags((prev) => [...prev, trimmed]);
+      setTagsInput('');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +95,6 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
       return;
     }
 
-    const tags = tagsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
     const trade: Trade = {
       id: `trade-${Date.now()}`,
       symbol: symbol.toUpperCase(),
@@ -58,7 +104,7 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
       openPrice: op,
       quantity: qty,
       notes: notes.trim() || undefined,
-      tags: tags.length ? tags : undefined,
+      tags: selectedTags.length ? selectedTags : undefined,
     };
 
     if (status === 'CLOSED') {
@@ -82,58 +128,166 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
   const fromDateLocal = (s: string) => new Date(s).getTime();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold">New Trade</h2>
-          <button onClick={onCancel} className="text-gray-500 hover:text-gray-700 text-2xl">
-            &times;
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-8 py-5">
+          <h2 className="text-2xl font-bold text-gray-900">New Trade</h2>
+          <button
+            onClick={onCancel}
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+        <form
+          onSubmit={handleSubmit}
+          className="create-trade-form-scroll flex flex-1 flex-col overflow-y-auto px-8 py-6"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#d1d5db #f9fafb',
+          }}
+        >
+          <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div ref={symbolRef} className="relative sm:col-span-2">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
               Symbol *
             </label>
-            <input
-              type="text"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              required
-            />
+            <div
+              className={`flex min-h-[42px] w-full flex-col rounded-lg border bg-white shadow-sm transition-colors ${
+                symbolDropdownOpen
+                  ? 'border-blue-500 ring-2 ring-blue-500/20'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="flex items-center gap-2 px-3 py-2">
+                <input
+                  type="text"
+                  value={symbolDropdownOpen ? symbolSearch : (selectedCoin ? `${selectedCoin.symbol.toUpperCase()}` : symbol)}
+                  onChange={(e) => {
+                    setSymbolSearch(e.target.value);
+                    setSymbolDropdownOpen(true);
+                  }}
+                  onFocus={() => setSymbolDropdownOpen(true)}
+                  placeholder={isLoading ? 'Loading symbols...' : 'Search symbol or name...'}
+                  disabled={isLoading}
+                  className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-wait"
+                />
+                <svg
+                  className={`h-4 w-4 flex-shrink-0 text-gray-400 transition-transform ${symbolDropdownOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {symbolDropdownOpen && (
+                <div className="max-h-64 overflow-y-auto border-t border-gray-100 py-2">
+                  {isLoading && (
+                    <p className="px-4 py-3 text-sm text-gray-500">Loading symbols...</p>
+                  )}
+                  {error && (
+                    <p className="px-4 py-2 text-sm text-red-600">{error}</p>
+                  )}
+                  {!error && !isLoading && filteredCoins.length === 0 && (
+                    <p className="px-4 py-3 text-sm text-gray-500">No symbols found</p>
+                  )}
+                  {!error && !isLoading &&
+                    filteredCoins.map((coin) => (
+                      <button
+                        key={coin.id}
+                        type="button"
+                        onClick={() => {
+                          setSymbol(coin.symbol.toUpperCase());
+                          setSymbolSearch('');
+                          setSymbolDropdownOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
+                          symbol.toUpperCase() === coin.symbol.toUpperCase()
+                            ? 'bg-blue-50 font-semibold text-blue-700'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="w-14 shrink-0 font-mono font-medium">{coin.symbol.toUpperCase()}</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="sm:col-span-1">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
               Position *
             </label>
-            <select
-              value={position}
-              onChange={(e) => setPosition(e.target.value as 'LONG' | 'SHORT')}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            >
-              <option value="LONG">LONG</option>
-              <option value="SHORT">SHORT</option>
-            </select>
+            <div className="flex gap-3">
+              {(['LONG', 'SHORT'] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setPosition(opt)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-semibold shadow-sm transition-all ${
+                    position === opt
+                      ? opt === 'LONG'
+                        ? 'border-green-500 bg-green-50 text-green-700 ring-2 ring-green-500/20'
+                        : 'border-red-500 bg-red-50 text-red-700 ring-2 ring-red-500/20'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt === 'LONG' ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
+                    </svg>
+                  )}
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
               Status *
             </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as TradeStatus)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            >
-              <option value="OPEN">Open (still holding)</option>
-              <option value="CLOSED">Closed (exited)</option>
-            </select>
+            <div className="flex gap-3">
+              {(['OPEN', 'CLOSED'] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setStatus(opt)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-semibold shadow-sm transition-all ${
+                    status === opt
+                      ? opt === 'OPEN'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20'
+                        : 'border-gray-500 bg-gray-100 text-gray-700 ring-2 ring-gray-500/20'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt === 'OPEN' ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  {opt === 'OPEN' ? 'Open (holding)' : 'Closed (exited)'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Open Time *
@@ -215,17 +369,86 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags (comma-separated)
+          <div ref={tagsRef} className="relative">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Tags
             </label>
-            <input
-              type="text"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="swing, breakout"
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
+            <div
+              className={`flex min-h-[42px] w-full flex-col rounded-lg border bg-white shadow-sm transition-colors ${
+                tagsDropdownOpen
+                  ? 'border-blue-500 ring-2 ring-blue-500/20'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))}
+                      className="rounded-full p-0.5 hover:bg-blue-200"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                      e.preventDefault();
+                      addTagFromInput();
+                    }
+                  }}
+                  onFocus={() => setTagsDropdownOpen(true)}
+                  placeholder="Type tag and press Enter..."
+                  className="min-w-[140px] flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setTagsDropdownOpen(!tagsDropdownOpen)}
+                  className="flex-shrink-0 p-1"
+                >
+                  <svg
+                    className={`h-4 w-4 text-gray-400 transition-transform ${tagsDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              {tagsDropdownOpen && (
+                <div className="max-h-52 overflow-y-auto border-t border-gray-100 py-2">
+                  {existingTags
+                    .filter((t) => !selectedTags.includes(t))
+                    .filter((t) => !tagsInput.trim() || t.toLowerCase().includes(tagsInput.trim().toLowerCase()))
+                    .slice(0, 50)
+                    .map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setSelectedTags((prev) => [...prev, tag])}
+                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  {existingTags.length === 0 && (
+                    <p className="px-4 py-3 text-sm text-gray-500">No tags yet. Create a trade with tags first.</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -239,18 +462,19 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
               className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </div>
+          </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 border-t border-gray-100 pt-6">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg font-medium"
+              className="flex-1 rounded-lg bg-gray-100 px-4 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700"
+              className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
             >
               Create Trade
             </button>

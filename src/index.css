@@ -43,3 +43,22 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Modal form scroll area - thinner, softer scrollbar */
+.create-trade-form-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.create-trade-form-scroll::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 3px;
+}
+
+.create-trade-form-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.create-trade-form-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

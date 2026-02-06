@@ -58,6 +58,12 @@ export const TradeListPage: React.FC = () => {
     [trades, selectedTradeId]
   );
 
+  const existingTags = useMemo(() => {
+    const set = new Set<string>();
+    trades.forEach((t) => (t.tags || []).forEach((tag) => set.add(tag)));
+    return Array.from(set).sort();
+  }, [trades]);
+
   const handleRowClick = useCallback((trade: Trade) => {
     setSelectedTradeId(trade.id);
   }, []);
@@ -165,6 +171,7 @@ export const TradeListPage: React.FC = () => {
         <CreateTradeForm
           onSubmit={handleCreateTrade}
           onCancel={() => setShowCreateForm(false)}
+          existingTags={existingTags}
         />
       )}
     </div>
