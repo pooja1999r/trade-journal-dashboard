@@ -1,22 +1,22 @@
 /**
- * CreateTradeForm Component
- * Form for creating new trades with the new schema.
+ * CreateTradeModal Component
+ * Modal form for creating new trades with the new schema.
  * Symbol selector loads from localStorage.
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import type { Trade, TradeStatus } from './constants/types';
-import { useCoins } from '../hooks/useCoins';
+import type { Trade, TradeStatus } from '../constants/types';
+import { useCoins } from '../../hooks/useCoins';
 
-interface CreateTradeFormProps {
+interface CreateTradeModalProps {
   onSubmit: (trade: Trade) => void;
   onCancel: () => void;
-  existingTags?: string[]; // Tags from all existing trades
+  existingTags?: string[];
 }
 
 const DISPLAY_LIMIT = 80;
 
-export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
+export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
   onSubmit,
   onCancel,
   existingTags = [],

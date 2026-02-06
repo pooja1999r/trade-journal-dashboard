@@ -4,18 +4,25 @@
  * Syncs API + localStorage via hooks.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTrades } from '../hooks/useTrades';
 import { useMarketData } from '../hooks/useMarketData';
 import { TradeTable } from './TradeTable';
 import { TradeFilters } from './TradeFilters';
-import { TradeDetailModal } from './TradeDetailModal';
-import { CreateTradeForm } from './CreateTradeForm';
+import { TradeDetailModal } from './modals/TradeDetailModal';
+import { CreateTradeModal } from './modals/CreateTradeModal';
+import { ConfirmModal } from './modals/ConfirmModal';
 import { filterTrades, sortTradesByOpenTimestamp } from '../utils/tradeFilters';
 import { tradeStorageService } from '../services/tradeStorageService';
 import { loadFilters, saveFilters } from '../utils/filterStorage';
 import type { Trade, TradeFilters as TradeFiltersType } from './constants/types';
 import { mockTrades } from '../data/mockTrades';
+
+const DEMO_LOADED_KEY = 'trade_journal_demo_loaded';
+
+function getDemoLoaded(): boolean {
+  return localStorage.getItem(DEMO_LOADED_KEY) === 'true';
+}
 
 const defaultFilters: TradeFiltersType = {
   symbol: '',
@@ -47,6 +54,17 @@ export const TradeListPage: React.FC = () => {
   }, []);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showLoadDemoConfirm, setShowLoadDemoConfirm] = useState(false);
+  const [demoLoaded, setDemoLoaded] = useState(getDemoLoaded);
+  const [loadDemoHighlighted, setLoadDemoHighlighted] = useState(false);
+
+  useEffect(() => {
+    if (!getDemoLoaded()) {
+      setLoadDemoHighlighted(true);
+      const timer = setTimeout(() => setLoadDemoHighlighted(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const filteredTrades = useMemo(() => {
     const filtered = filterTrades(trades, filters);
@@ -77,13 +95,15 @@ export const TradeListPage: React.FC = () => {
     [addTrade, loadTrades]
   );
 
-  const handleLoadMockData = useCallback(() => {
-    if (window.confirm('Load demo trades? This will add to existing trades.')) {
-      mockTrades.forEach((t, i) =>
-        addTrade({ ...t, id: `trade-${Date.now()}-${i}` })
-      );
-    }
-  }, [addTrade]);
+  const handleLoadDemoConfirm = useCallback(() => {
+    mockTrades.forEach((t, i) =>
+      addTrade({ ...t, id: `trade-${Date.now()}-${i}` })
+    );
+    localStorage.setItem(DEMO_LOADED_KEY, 'true');
+    setDemoLoaded(true);
+    setShowLoadDemoConfirm(false);
+    loadTrades();
+  }, [addTrade, loadTrades]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -97,17 +117,23 @@ export const TradeListPage: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={handleLoadMockData}
-                className="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg font-medium"
-              >
-                Load Demo
-              </button>
+              {!demoLoaded && (
+                <button
+                  onClick={() => setShowLoadDemoConfirm(true)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    loadDemoHighlighted
+                      ? 'bg-blue-400 ring-2 ring-white ring-offset-2 ring-offset-blue-700 shadow-lg shadow-black/20'
+                      : 'bg-blue-500 hover:bg-blue-400'
+                  }`}
+                >
+                  Load Demo Data
+                </button>
+              )}
               <button
                 onClick={() => setShowCreateForm(true)}
                 className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2 rounded-lg font-medium shadow"
               >
-                + New Trade
+                Create New Trade
               </button>
             </div>
           </div>
@@ -168,12 +194,22 @@ export const TradeListPage: React.FC = () => {
       )}
 
       {showCreateForm && (
-        <CreateTradeForm
+        <CreateTradeModal
           onSubmit={handleCreateTrade}
           onCancel={() => setShowCreateForm(false)}
           existingTags={existingTags}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showLoadDemoConfirm}
+        title="Load Demo Data?"
+        message="Are you sure you want to load sample trades? This will add demo data to your trade journal."
+        confirmLabel="Load Demo"
+        cancelLabel="Cancel"
+        onConfirm={handleLoadDemoConfirm}
+        onCancel={() => setShowLoadDemoConfirm(false)}
+      />
     </div>
   );
 };
