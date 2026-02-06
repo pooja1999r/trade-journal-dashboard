@@ -62,3 +62,22 @@ code {
 .create-trade-form-scroll::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* Trade table horizontal scroll */
+.trade-table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.trade-table-scroll::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 4px;
+}
+
+.trade-table-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.trade-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

@@ -41,17 +41,31 @@ export const TradeTable: React.FC<TradeTableProps> = ({
   onRowClick,
 }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200">
+    <div
+      className="trade-table-scroll overflow-x-auto overflow-y-visible rounded-lg border border-gray-200"
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#d1d5db #f9fafb',
+      }}
+    >
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th
+              className="sticky left-0 z-20 min-w-[100px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+            >
               Symbol
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th
+              className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ left: '100px' }}
+            >
               Status
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th
+              className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ left: '184px' }}
+            >
               Position
             </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -115,12 +129,17 @@ export const TradeTable: React.FC<TradeTableProps> = ({
               <tr
                 key={trade.id}
                 onClick={() => onRowClick(trade)}
-                className="hover:bg-blue-50 cursor-pointer transition-colors"
+                className="group cursor-pointer transition-colors hover:bg-blue-50"
               >
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <td
+                  className="sticky left-0 z-10 min-w-[100px] bg-slate-50 px-4 py-3 text-sm font-medium text-gray-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
+                >
                   {trade.symbol}
                 </td>
-                <td className="px-4 py-3">
+                <td
+                  className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
+                  style={{ left: '100px' }}
+                >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
                       trade.status === 'OPEN'
@@ -131,7 +150,10 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                     {trade.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td
+                  className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
+                  style={{ left: '184px' }}
+                >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
                       trade.position === 'LONG'
