@@ -55,6 +55,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
   const [tagsInput, setTagsInput] = useState('');
   const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
   const tagsRef = useRef<HTMLDivElement>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const addTagFromInput = () => {
     const trimmed = tagsInput.trim();
@@ -66,17 +67,18 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
 
     const op = parseFloat(openPrice);
     const cp = closePrice.trim() ? parseFloat(closePrice) : NaN;
     const qty = parseFloat(quantity);
 
     if (isNaN(op) || isNaN(qty) || op <= 0 || qty <= 0) {
-      alert('Please enter valid open price and quantity');
+      setValidationError('Please enter valid open price and quantity');
       return;
     }
     if (status === 'CLOSED' && (isNaN(cp) || cp <= 0)) {
-      alert('Please enter valid close price for closed trades');
+      setValidationError('Please enter valid close price for closed trades');
       return;
     }
 
@@ -446,6 +448,9 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
           </div>
           </div>
 
+          {validationError && (
+            <p className="text-sm text-red-600">{validationError}</p>
+          )}
           <div className="flex gap-4 border-t border-gray-100 pt-6">
             <button
               type="button"

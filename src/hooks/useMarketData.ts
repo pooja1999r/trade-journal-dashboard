@@ -1,13 +1,15 @@
 /**
  * useMarketData hook
- * WebSocket connection to Binance for real-time ticker prices.
+ *
+ * Subscribes to Binance ticker via centralized WebSocket manager.
+ * Auto-cleanup on unmount. No WebSocket created inside component.
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import type { MarketDataMap } from '../components/constants/types';
 import { subscribeMarketData } from '../services/marketDataService';
 
-export function useMarketData(symbols: string[]) {
+export function useMarketData(symbols: string[], reconnectTrigger?: number) {
   const [data, setData] = useState<MarketDataMap>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function useMarketData(symbols: string[]) {
       clearTimeout(timer);
       unsubscribe?.();
     };
-  }, [symbolsKey]);
+  }, [symbolsKey, reconnectTrigger]);
 
   return { data, isLoading, error, refetch: () => {} };
 }

@@ -35,13 +35,14 @@ const defaultFilters: TradeFiltersType = {
 
 export const TradeListPage: React.FC = () => {
   const { trades, addTrade, updateTrade, loadTrades } = useTrades();
+  const [wsReconnectTrigger, setWsReconnectTrigger] = useState(0);
 
   const symbols = useMemo(
     () => tradeStorageService.getUniqueSymbols(trades),
     [trades]
   );
 
-  const { data: marketData, isLoading, error } = useMarketData(symbols);
+  const { data: marketData, isLoading, error } = useMarketData(symbols, wsReconnectTrigger);
 
   const [filters, setFilters] = useState<TradeFiltersType>(() => {
     const loaded = loadFilters();
@@ -93,6 +94,7 @@ export const TradeListPage: React.FC = () => {
       setDemoLoaded(true);
       setShowCreateForm(false);
       loadTrades();
+      setWsReconnectTrigger((k) => k + 1);
     },
     [addTrade, loadTrades]
   );
