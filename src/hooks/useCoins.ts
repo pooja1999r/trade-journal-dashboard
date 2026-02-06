@@ -1,14 +1,14 @@
 /**
  * useCoins hook
- * Fetches CoinGecko coins list for symbol selection
+ * Loads trading symbols from localStorage for symbol selection
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchCoinsList } from '../services/coinsService';
-import type { CoinGeckoCoin } from '../services/coinsService';
+import type { TradingSymbol } from '../services/coinsService';
 
 export function useCoins() {
-  const [coins, setCoins] = useState<CoinGeckoCoin[]>([]);
+  const [coins, setCoins] = useState<TradingSymbol[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

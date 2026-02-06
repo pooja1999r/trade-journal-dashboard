@@ -1,7 +1,7 @@
 /**
  * CreateTradeForm Component
  * Form for creating new trades with the new schema.
- * Symbol selector fetches from CoinGecko and supports search.
+ * Symbol selector loads from localStorage.
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -23,26 +23,11 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
 }) => {
   const now = Date.now();
   const { coins, isLoading, error } = useCoins();
-  const [symbol, setSymbol] = useState('BTC');
-  const [symbolSearch, setSymbolSearch] = useState('');
+  const [symbol, setSymbol] = useState('ETHBTC');
   const [symbolDropdownOpen, setSymbolDropdownOpen] = useState(false);
   const symbolRef = useRef<HTMLDivElement>(null);
 
-  const filteredCoins = useMemo(() => {
-    if (!symbolSearch.trim()) return coins.slice(0, DISPLAY_LIMIT);
-    const q = symbolSearch.toLowerCase().trim();
-    return coins
-      .filter(
-        (c) =>
-          c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
-      )
-      .slice(0, DISPLAY_LIMIT);
-  }, [coins, symbolSearch]);
-
-  const selectedCoin = useMemo(
-    () => coins.find((c) => c.symbol.toUpperCase() === symbol.toUpperCase()),
-    [coins, symbol]
-  );
+  const filteredCoins = useMemo(() => coins.slice(0, DISPLAY_LIMIT), [coins]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -153,71 +138,68 @@ export const CreateTradeForm: React.FC<CreateTradeFormProps> = ({
           <div className="space-y-5">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div ref={symbolRef} className="relative sm:col-span-2">
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => setSymbolDropdownOpen((o) => !o)}
+              onKeyDown={(e) => e.key === 'Enter' && setSymbolDropdownOpen((o) => !o)}
+              className="mb-1.5 block cursor-pointer text-xs font-semibold uppercase tracking-wider text-gray-500"
+            >
               Symbol *
-            </label>
-            <div
-              className={`flex min-h-[42px] w-full flex-col rounded-lg border bg-white shadow-sm transition-colors ${
+            </span>
+            <button
+              type="button"
+              onClick={() => setSymbolDropdownOpen((o) => !o)}
+              disabled={isLoading}
+              className={`flex w-full min-w-[120px] items-center justify-between rounded-lg border bg-white px-3 py-2.5 text-left text-sm text-gray-900 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-wait ${
                 symbolDropdownOpen
                   ? 'border-blue-500 ring-2 ring-blue-500/20'
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
               }`}
             >
-              <div className="flex items-center gap-2 px-3 py-2">
-                <input
-                  type="text"
-                  value={symbolDropdownOpen ? symbolSearch : (selectedCoin ? `${selectedCoin.symbol.toUpperCase()}` : symbol)}
-                  onChange={(e) => {
-                    setSymbolSearch(e.target.value);
-                    setSymbolDropdownOpen(true);
-                  }}
-                  onFocus={() => setSymbolDropdownOpen(true)}
-                  placeholder={isLoading ? 'Loading symbols...' : 'Search symbol or name...'}
-                  disabled={isLoading}
-                  className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-wait"
-                />
-                <svg
-                  className={`h-4 w-4 flex-shrink-0 text-gray-400 transition-transform ${symbolDropdownOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+              <span className="truncate">
+                {isLoading ? 'Loading...' : (symbol || 'Select symbol')}
+              </span>
+              <svg
+                className={`ml-2 h-4 w-4 flex-shrink-0 text-gray-400 transition-transform ${symbolDropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {symbolDropdownOpen && (
+              <div className="absolute left-0 right-0 top-full z-[100] mt-1.5 max-h-52 min-w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg ring-1 ring-black/5">
+                {isLoading && (
+                  <p className="px-4 py-3 text-sm text-gray-500">Loading symbols...</p>
+                )}
+                {error && (
+                  <p className="px-4 py-2 text-sm text-red-600">{error}</p>
+                )}
+                {!error && !isLoading && filteredCoins.length === 0 && (
+                  <p className="px-4 py-3 text-sm text-gray-500">No symbols found</p>
+                )}
+                {!error && !isLoading &&
+                  filteredCoins.map((coin) => (
+                    <button
+                      key={coin.id}
+                      type="button"
+                      onClick={() => {
+                        setSymbol(coin.symbol.toUpperCase());
+                        setSymbolDropdownOpen(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
+                        symbol.toUpperCase() === coin.symbol.toUpperCase()
+                          ? 'bg-blue-50 font-semibold text-blue-700'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      {coin.symbol.toUpperCase()}
+                    </button>
+                  ))}
               </div>
-              {symbolDropdownOpen && (
-                <div className="max-h-64 overflow-y-auto border-t border-gray-100 py-2">
-                  {isLoading && (
-                    <p className="px-4 py-3 text-sm text-gray-500">Loading symbols...</p>
-                  )}
-                  {error && (
-                    <p className="px-4 py-2 text-sm text-red-600">{error}</p>
-                  )}
-                  {!error && !isLoading && filteredCoins.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-gray-500">No symbols found</p>
-                  )}
-                  {!error && !isLoading &&
-                    filteredCoins.map((coin) => (
-                      <button
-                        key={coin.id}
-                        type="button"
-                        onClick={() => {
-                          setSymbol(coin.symbol.toUpperCase());
-                          setSymbolSearch('');
-                          setSymbolDropdownOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
-                          symbol.toUpperCase() === coin.symbol.toUpperCase()
-                            ? 'bg-blue-50 font-semibold text-blue-700'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="w-14 shrink-0 font-mono font-medium">{coin.symbol.toUpperCase()}</span>
-                      </button>
-                    ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="sm:col-span-1">

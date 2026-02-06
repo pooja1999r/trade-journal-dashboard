@@ -1,23 +1,38 @@
 /**
- * CoinGecko coins list service
- * Fetches crypto symbols from CoinGecko API
+ * Trading symbols service
+ * Loads symbol list from localStorage (hardcoded defaults)
  */
 
-export interface CoinGeckoCoin {
+export interface TradingSymbol {
   id: string;
   symbol: string;
-  name: string;
 }
 
-const API_URL = 'https://api.coingecko.com/api/v3/coins/list';
+const STORAGE_KEY = 'trade_journal_symbols';
 
-export async function fetchCoinsList(): Promise<CoinGeckoCoin[]> {
-  const response = await fetch(API_URL);
+const DEFAULT_SYMBOLS = ['ETHBTC', 'LTCBTC', 'BNBBTC', 'NEOBTC', 'QTUMETH'];
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch coins: ${response.status}`);
+function getDefaultTradingSymbols(): TradingSymbol[] {
+  return DEFAULT_SYMBOLS.map((s) => ({ id: s, symbol: s }));
+}
+
+function loadFromStorage(): TradingSymbol[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as string[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((s) => ({ id: s, symbol: s }));
+      }
+    }
+  } catch {
+    // ignore parse errors
   }
+  const defaults = getDefaultTradingSymbols();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SYMBOLS));
+  return defaults;
+}
 
-  const data = await response.json();
-  return data as CoinGeckoCoin[];
+export async function fetchCoinsList(): Promise<TradingSymbol[]> {
+  return Promise.resolve(loadFromStorage());
 }
