@@ -208,16 +208,20 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {trade.tags?.length ? (
-                    <div className="flex flex-wrap gap-1">
-                      {trade.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 bg-gray-100 rounded text-xs"
-                        >
-                          {tag}
+                    trade.tags.length === 1 ? (
+                      <span className="inline-block max-w-[100px] truncate px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                        {trade.tags[0]}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block max-w-[100px] truncate px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium" title={trade.tags[0]}>
+                          {trade.tags[0]}
                         </span>
-                      ))}
-                    </div>
+                        <span className="text-xs font-medium text-violet-600">
+                          +{trade.tags.length - 1} more
+                        </span>
+                      </span>
+                    )
                   ) : (
                     '—'
                   )}

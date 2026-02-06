@@ -66,7 +66,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
     }`;
 
   const dropdownPanel =
-    'absolute left-0 right-0 top-full z-[100] mt-1.5 max-h-52 min-w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg ring-1 ring-black/5';
+    'dropdown-panel-scroll absolute left-0 right-0 top-full z-[100] mt-1.5 max-h-52 min-w-full overflow-y-auto overflow-x-hidden rounded-lg border border-gray-200 bg-white py-2 shadow-lg ring-1 ring-black/5';
 
   const optionClass = (isSelected: boolean) =>
     `w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
@@ -94,7 +94,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
   );
 
   return (
-    <div ref={dropdownsRef} className="sticky top-0 mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div ref={dropdownsRef} className="sticky top-0 z-10 mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-end gap-5">
         {/* Symbol filter */}
         <div className="relative w-full min-w-[120px] sm:w-auto">
@@ -258,7 +258,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
             <ChevronIcon open={openDropdown === 'tags'} />
           </button>
           {openDropdown === 'tags' && (
-            <div className="absolute left-0 right-0 top-full z-[100] mt-1.5 max-h-52 min-w-[220px] overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg ring-1 ring-black/5">
+            <div className="dropdown-panel-scroll absolute left-0 right-0 top-full z-[100] mt-1.5 max-h-52 min-w-[220px] overflow-y-auto overflow-x-hidden rounded-lg border border-gray-200 bg-white py-2 shadow-lg ring-1 ring-black/5">
               <button
                 type="button"
                 onClick={selectAllTags}

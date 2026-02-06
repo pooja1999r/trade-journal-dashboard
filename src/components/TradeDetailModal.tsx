@@ -96,16 +96,16 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-5 flex justify-between items-center rounded-t-xl">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-gray-900">
               {trade.symbol} {trade.position}
             </h2>
             <span
-              className={`inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded ${
+              className={`inline-block px-2.5 py-1 text-xs font-semibold rounded ${
                 trade.status === 'OPEN'
                   ? 'bg-blue-100 text-blue-800'
                   : 'bg-gray-100 text-gray-700'
@@ -116,13 +116,15 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            aria-label="Close"
           >
-            &times;
+            <span className="text-2xl leading-none">&times;</span>
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="create-trade-form-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 space-y-6">
           {/* Trade summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
@@ -224,13 +226,18 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
               <h3 className="text-lg font-semibold">Notes</h3>
               {onUpdate && (
                 <button
+                  type="button"
                   onClick={() => {
                     if (isEditing) {
                       onUpdate(trade.id, { notes: editNotes, tags: editTags.length ? editTags : undefined });
                     }
                     setIsEditing(!isEditing);
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className={
+                    isEditing
+                      ? 'rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700'
+                      : 'text-sm text-blue-600 hover:text-blue-800'
+                  }
                 >
                   {isEditing ? 'Save' : 'Edit'}
                 </button>

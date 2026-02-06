@@ -63,6 +63,25 @@ code {
   background: #9ca3af;
 }
 
+/* Dropdown panel scroll - thin, subtle */
+.dropdown-panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-panel-scroll::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 3px;
+}
+
+.dropdown-panel-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.dropdown-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 /* Trade table horizontal scroll */
 .trade-table-scroll::-webkit-scrollbar {
   height: 8px;
