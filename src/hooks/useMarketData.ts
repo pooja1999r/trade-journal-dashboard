@@ -1,22 +1,22 @@
 /**
  * useMarketData hook
- * Fetches live market data for symbols present in trades.
- * Syncs via useEffect when symbols change.
+ * WebSocket connection to Binance for real-time ticker prices.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { MarketDataMap } from '../components/constants/types';
-import { fetchMarketData } from '../services/marketDataService';
-
-const POLL_INTERVAL_MS = 60000; // 1 minute
+import { subscribeMarketData } from '../services/marketDataService';
 
 export function useMarketData(symbols: string[]) {
   const [data, setData] = useState<MarketDataMap>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadMarketData = useCallback(async () => {
-    if (symbols.length === 0) {
+  const symbolsKey = useMemo(() => symbols.join(','), [symbols]);
+
+  useEffect(() => {
+    const syms = symbolsKey ? symbolsKey.split(',').filter(Boolean) : [];
+    if (syms.length === 0) {
       setData({});
       setIsLoading(false);
       setError(null);
@@ -26,23 +26,25 @@ export function useMarketData(symbols: string[]) {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const result = await fetchMarketData(symbols);
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch market data');
-      setData({});
-    } finally {
-      setIsLoading(false);
-    }
-  }, [symbols.join(',')]);
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
 
-  useEffect(() => {
-    loadMarketData();
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      unsubscribe = subscribeMarketData(syms, (newData) => {
+        if (cancelled) return;
+        setData(newData);
+        setIsLoading(false);
+        setError(null);
+      });
+    }, 0);
 
-    const interval = setInterval(loadMarketData, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [loadMarketData]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      unsubscribe?.();
+    };
+  }, [symbolsKey]);
 
-  return { data, isLoading, error, refetch: loadMarketData };
+  return { data, isLoading, error, refetch: () => {} };
 }

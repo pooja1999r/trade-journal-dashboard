@@ -1,70 +1,89 @@
 /**
  * Market Data Service
- * Fetches live crypto prices from API for symbols stored in trades.
- * Batches requests and handles loading/error states.
- * Falls back to mock data when API is unavailable (e.g. no VITE_API_URL).
+ * WebSocket connection to Binance for real-time ticker prices.
  */
 
 import type { MarketDataMap } from '../components/constants/types';
-import { getMockMarketData } from '../utils/mockMarketData';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
-const API_KEY = import.meta.env.VITE_API_KEY || '';
+const WS_BASE = 'wss://stream.binance.com:9443/stream';
+
+/** Normalize symbol to Binance stream pair (e.g. BTC → btcusdt, ETHBTC → ethbtc) */
+function toBinanceStreamPair(symbol: string): string {
+  const s = symbol.toUpperCase().trim();
+  if (s.length >= 6) return s.toLowerCase(); // already a pair (ETHBTC, BTCUSDT)
+  return `${s.toLowerCase()}usdt`;
+}
+
+interface BinanceTickerMessage {
+  stream: string;
+  data: {
+    s: string;
+    c: string;
+    P?: string;
+    h?: string;
+    l?: string;
+  };
+}
 
 /**
- * Fetch market data for given symbols.
- * API key passed via Authorization header.
- * Returns a map of symbol -> market data for efficient lookup.
- * Falls back to mock data if API URL not configured or request fails.
+ * Subscribe to Binance ticker streams for given symbols.
+ * Returns an unsubscribe function.
  */
-export async function fetchMarketData(symbols: string[]): Promise<MarketDataMap> {
-  if (symbols.length === 0) return {};
-
-  const normalizedSymbols = symbols.map((s) => s.toUpperCase());
-
-  if (!API_URL) {
-    return getMockMarketData(normalizedSymbols);
+export function subscribeMarketData(
+  symbols: string[],
+  onUpdate: (data: MarketDataMap) => void
+): () => void {
+  if (symbols.length === 0) {
+    onUpdate({});
+    return () => {};
   }
 
-  try {
-    // FreeCryptoAPI: ?symbol=BTC or ?symbol=BTC+ETH
-    const symbolParam = normalizedSymbols.join('+');
-    const url = `${API_URL}?symbol=${encodeURIComponent(symbolParam)}`;
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: API_KEY ? `Bearer ${API_KEY}` : '',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Market data API error: ${response.status}`);
-    }
-
-    const json = await response.json();
-
-    // Adapt FreeCryptoAPI response (price, change_24h) to our MarketDataMap
-    const map: MarketDataMap = {};
-    const items = Array.isArray(json) ? json : json?.data ?? json?.symbols ?? [];
-    for (const item of items) {
-      const symbol = (item.symbol || item.Symbol || '').toUpperCase();
-      if (!symbol) continue;
-      map[symbol] = {
-        symbol,
-        last: String(item.last ?? item.price ?? item.Last ?? item.Price ?? 0),
-        last_btc: '1',
-        lowest: String(item.lowest ?? item.low ?? item.Last ?? item.price ?? 0),
-        highest: String(item.highest ?? item.high ?? item.Last ?? item.price ?? 0),
-        date: item.date ?? item.Date ?? new Date().toISOString(),
-        daily_change_percentage: String(
-          item.daily_change_percentage ?? item.change_24h ?? item.change ?? 0
-        ),
-        source_exchange: item.source_exchange ?? item.exchange ?? 'unknown',
-      };
-    }
-
-    return map;
-  } catch {
-    return getMockMarketData(normalizedSymbols);
+  const streamPairs: string[] = [];
+  const pairToSymbol: Record<string, string> = {};
+  for (const s of symbols) {
+    const pair = toBinanceStreamPair(s);
+    pairToSymbol[pair] = s.toUpperCase();
+    streamPairs.push(`${pair}@ticker`);
   }
+  const streams = streamPairs.join('/');
+  const ws = new WebSocket(`${WS_BASE}?streams=${streams}`);
+
+  const map: MarketDataMap = {};
+  const now = new Date().toISOString();
+
+  const applyUpdate = (binanceSymbol: string, last: string, changePct: string, high?: string, low?: string) => {
+    const pair = binanceSymbol.toLowerCase();
+    const displayKey = pairToSymbol[pair] ?? binanceSymbol.toUpperCase();
+    map[displayKey] = {
+      symbol: displayKey,
+      last,
+      last_btc: '1',
+      lowest: low ?? last,
+      highest: high ?? last,
+      date: now,
+      daily_change_percentage: changePct ?? '0',
+      source_exchange: 'binance',
+    };
+    onUpdate({ ...map });
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data) as BinanceTickerMessage;
+      const { s, c, P, h, l } = message.data ?? {};
+      if (s && c) {
+        applyUpdate(s, c, P ?? '0', h, l);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  };
+
+  ws.onerror = () => {
+    // Connection error - keep existing data, no new updates
+  };
+
+  return () => {
+    ws.close();
+  };
 }
