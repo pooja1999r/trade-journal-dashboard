@@ -42,7 +42,7 @@ export const TradeTable: React.FC<TradeTableProps> = ({
 }) => {
   return (
     <div
-      className="trade-table-scroll overflow-x-auto overflow-y-visible rounded-lg border border-gray-200"
+      className="trade-table-scroll relative z-0 overflow-x-auto overflow-y-visible rounded-lg border border-gray-200"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#d1d5db #f9fafb',
