@@ -20,6 +20,8 @@ import {
   calculatePnL,
   formatDuration,
   calculateRMultiple,
+  toDateTimeLocalGMT,
+  fromDateTimeLocalGMT,
 } from '../../utils/calculations';
 
 interface TradeDetailModalProps {
@@ -50,7 +52,7 @@ function buildChartData(trade: Trade) {
     const progress = i / steps;
     const price = trade.openPrice + (closePrice - trade.openPrice) * progress;
     points.push({
-      time: new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' GMT',
       price,
       label: i === 0 ? 'Entry' : i === steps ? 'Exit' : undefined,
     });
@@ -135,13 +137,13 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           {/* Trade summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-500">Open ({getOpenLegLabel(trade.position)})</div>
-              <div className="font-semibold">{trade.openPrice.toLocaleString()}</div>
+              <div className="text-sm text-gray-500">Open ({getOpenLegLabel(trade.position)}) ($)</div>
+              <div className="font-semibold">{trade.openPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-500">Close ({getCloseLegLabel(trade.position)})</div>
+              <div className="text-sm text-gray-500">Close ({getCloseLegLabel(trade.position)}) ($)</div>
               <div className="font-semibold">
-                {trade.closePrice != null ? trade.closePrice.toLocaleString() : '—'}
+                {trade.closePrice != null ? trade.closePrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '—'}
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
@@ -156,7 +158,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="rounded-lg p-4 bg-green-50">
-              <div className="text-sm text-gray-500">PNL</div>
+              <div className="text-sm text-gray-500">PNL ($)</div>
               <div
                 className={`font-bold text-xl ${
                   pnl != null
@@ -165,7 +167,7 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                 }`}
               >
                 {pnl != null
-                  ? `${pnl >= 0 ? '+' : ''}${pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  ? `${pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                   : '—'}
               </div>
             </div>
@@ -179,8 +181,8 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             )}
             {trade.stopLoss != null && (
               <div className="rounded-lg p-4 bg-gray-50">
-                <div className="text-sm text-gray-500">Stop Loss</div>
-                <div className="font-semibold">{trade.stopLoss.toLocaleString()}</div>
+                <div className="text-sm text-gray-500">Stop Loss ($)</div>
+                <div className="font-semibold">{trade.stopLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             )}
           </div>
@@ -199,8 +201,8 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                     tickFormatter={(v) => v.toLocaleString()}
                   />
                   <Tooltip
-                    formatter={(v: number) => v.toLocaleString()}
-                    labelFormatter={(label) => `Time: ${label}`}
+                    formatter={(v: number) => Number(v).toLocaleString()}
+                    labelFormatter={(label) => `Time (GMT): ${label}`}
                   />
                   <ReferenceLine
                     y={trade.openPrice}
@@ -298,22 +300,28 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                 {editStatus === 'CLOSED' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-200 bg-white p-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close price</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close price ($)</label>
                       <input
                         type="number"
                         step="any"
+                        min={0}
                         value={editClosePrice}
-                        onChange={(e) => setEditClosePrice(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v !== '' && parseFloat(v) < 0) return;
+                          setEditClosePrice(v);
+                        }}
                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         placeholder="0.00"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close time</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close time (GMT)</label>
                       <input
                         type="datetime-local"
-                        value={new Date(editCloseTimestamp).toISOString().slice(0, 16)}
-                        onChange={(e) => setEditCloseTimestamp(new Date(e.target.value).getTime())}
+                        value={toDateTimeLocalGMT(editCloseTimestamp)}
+                        onChange={(e) => setEditCloseTimestamp(fromDateTimeLocalGMT(e.target.value))}
                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       />
                     </div>

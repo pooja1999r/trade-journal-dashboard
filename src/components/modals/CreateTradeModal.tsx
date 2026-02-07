@@ -7,6 +7,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Trade, TradeStatus } from '../constants/types';
 import { useCoins } from '../../hooks/useCoins';
+import { toDateTimeLocalGMT, fromDateTimeLocalGMT } from '../../utils/calculations';
 
 interface CreateTradeModalProps {
   onSubmit: (trade: Trade) => void;
@@ -44,7 +45,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
   }, []);
   const [position, setPosition] = useState<'LONG' | 'SHORT'>('LONG');
   const [status, setStatus] = useState<TradeStatus>('CLOSED');
-  const [openTimestamp, setOpenTimestamp] = useState(now - 24 * 60 * 60 * 1000);
+  const [openTimestamp, setOpenTimestamp] = useState(now);
   const [closeTimestamp, setCloseTimestamp] = useState(now);
   const [openPrice, setOpenPrice] = useState('');
   const [closePrice, setClosePrice] = useState('');
@@ -107,12 +108,8 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
     onSubmit(trade);
   };
 
-  const toDateLocal = (ts: number) => {
-    const d = new Date(ts);
-    return d.toISOString().slice(0, 16);
-  };
-
-  const fromDateLocal = (s: string) => new Date(s).getTime();
+  const toDateLocal = toDateTimeLocalGMT;
+  const fromDateLocal = fromDateTimeLocalGMT;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -274,7 +271,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
           <div className="grid grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Open Time *
+                Open Time (GMT) *
               </label>
               <input
                 type="datetime-local"
@@ -285,7 +282,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Close Time {status === 'CLOSED' ? '*' : '(optional)'}
+                Close Time (GMT) {status === 'CLOSED' ? '*' : '(optional)'}
               </label>
               <input
                 type="datetime-local"
@@ -300,26 +297,38 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Open Price *
+                Open Price ($) *
               </label>
               <input
                 type="number"
                 step="any"
+                min={0}
                 value={openPrice}
-                onChange={(e) => setOpenPrice(e.target.value)}
+                onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v !== '' && parseFloat(v) < 0) return;
+                  setOpenPrice(v);
+                }}
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Close Price {status === 'CLOSED' ? '*' : '(optional)'}
+                Close Price ($) {status === 'CLOSED' ? '*' : '(optional)'}
               </label>
               <input
                 type="number"
                 step="any"
+                min={0}
                 value={closePrice}
-                onChange={(e) => setClosePrice(e.target.value)}
+                onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v !== '' && parseFloat(v) < 0) return;
+                  setClosePrice(v);
+                }}
                 disabled={status === 'OPEN'}
                 className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100"
                 required={status === 'CLOSED'}
@@ -332,8 +341,14 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
               <input
                 type="number"
                 step="any"
+                min={0}
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v !== '' && parseFloat(v) < 0) return;
+                  setQuantity(v);
+                }}
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 required
               />
@@ -342,7 +357,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stop Loss (optional)
+              Stop Loss ($) (optional)
             </label>
             <input
               type="number"

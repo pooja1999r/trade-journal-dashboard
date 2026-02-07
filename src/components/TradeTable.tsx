@@ -10,6 +10,7 @@ import {
   calculatePnL,
   formatDuration,
   calculateRMultiple,
+  formatTimestampGMT,
 } from '../utils/calculations';
 
 interface TradeTableProps {
@@ -23,10 +24,6 @@ interface TradeTableProps {
 
 function formatPrice(n: number): string {
   return n >= 1 ? n.toLocaleString(undefined, { minimumFractionDigits: 2 }) : n.toFixed(6);
-}
-
-function formatTimestamp(ts: number): string {
-  return new Date(ts).toLocaleString();
 }
 
 /** Open leg: LONG = Buy, SHORT = Sell */
@@ -59,18 +56,47 @@ export const TradeTable: React.FC<TradeTableProps> = ({
 
   return (
     <div
-      className="trade-table-scroll relative z-0 overflow-x-auto overflow-y-visible"
+      className="trade-table-scroll overflow-x-auto overflow-y-visible"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#d1d5db #f9fafb',
       }}
     >
-      <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: 'auto' }}>
+      <table
+        className="min-w-full divide-y divide-gray-200"
+        style={{
+          tableLayout: 'fixed',
+          minWidth: '98rem',
+          borderCollapse: 'separate',
+          borderSpacing: 0,
+        }}
+      >
+        <colgroup>
+          <col style={{ width: '2.5rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '5rem' }} />
+          <col style={{ width: '5rem' }} />
+          <col style={{ width: '9rem' }} />
+          <col style={{ width: '5rem' }} />
+          <col style={{ width: '9rem' }} />
+          <col style={{ width: '5rem' }} />
+          <col style={{ width: '4.5rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '4rem' }} />
+          <col style={{ width: '5.5rem' }} />
+          <col style={{ width: '3.5rem' }} />
+          <col style={{ width: '5.5rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '10rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '3.5rem' }} />
+        </colgroup>
         <thead className="bg-gray-50">
           <tr>
             <th
-              className="sticky left-0 z-20 w-10 min-w-[2.5rem] bg-slate-100 px-3 py-3 text-center shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ position: 'sticky', left: 0 }}
+              className="z-20 bg-slate-100 px-2 py-3 text-center text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ position: 'sticky', left: 0, minWidth: '2.5rem', maxWidth: '2.5rem', boxSizing: 'border-box' }}
             >
               {onSelectAllChange ? (
                 <input
@@ -86,66 +112,66 @@ export const TradeTable: React.FC<TradeTableProps> = ({
               )}
             </th>
             <th
-              className="sticky left-0 z-20 min-w-[100px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ left: '2.5rem' }}
+              className="z-20 bg-slate-100 px-3 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ position: 'sticky', left: '2.5rem', minWidth: '6rem', maxWidth: '6rem', boxSizing: 'border-box' }}
             >
               Symbol
             </th>
             <th
-              className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ left: 'calc(2.5rem + 100px)' }}
+              className="z-20 bg-slate-100 px-3 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ position: 'sticky', left: '8.5rem', minWidth: '5rem', maxWidth: '5rem', boxSizing: 'border-box' }}
             >
               Status
             </th>
             <th
-              className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ left: 'calc(2.5rem + 184px)' }}
+              className="z-20 bg-slate-100 px-3 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] border-r border-gray-200"
+              style={{ position: 'sticky', left: '13.5rem', minWidth: '5rem', maxWidth: '5rem', boxSizing: 'border-box' }}
             >
               Position
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Open Time
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Open (Buy/Sell)
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Close Time
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Close (Sell/Buy)
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Duration
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-              Open Price
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+              Open Price ($)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-              Close Price
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+              Close Price ($)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Quantity
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-              PNL
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+              PNL ($)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               R-Value
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-              Stop Loss
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+              Stop Loss ($)
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Tags
             </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Notes
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-              Current Price
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+              Current Price ($)
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
               Daily %
             </th>
           </tr>
@@ -170,8 +196,8 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                 className="cursor-pointer transition-colors hover:bg-blue-50"
               >
                 <td
-                  className="sticky left-0 z-10 w-10 min-w-[2.5rem] bg-slate-50 px-3 py-3 text-center align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors hover:bg-slate-100"
-                  style={{ position: 'sticky', left: 0 }}
+                  className="z-10 bg-slate-50 px-2 py-3 text-center align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors hover:bg-slate-100"
+                  style={{ position: 'sticky', left: 0, minWidth: '2.5rem', maxWidth: '2.5rem', boxSizing: 'border-box' }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <input
@@ -183,14 +209,14 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                   />
                 </td>
                 <td
-                  className="sticky left-0 z-10 min-w-[100px] bg-slate-50 px-4 py-3 text-sm font-medium text-gray-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
-                  style={{ left: '2.5rem' }}
+                  className="z-10 bg-slate-50 px-3 py-3 text-left text-sm font-medium text-gray-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100 overflow-hidden"
+                  style={{ position: 'sticky', left: '2.5rem', minWidth: '6rem', maxWidth: '6rem', boxSizing: 'border-box' }}
                 >
-                  {trade.symbol}
+                  <span className="block truncate" title={trade.symbol}>{trade.symbol}</span>
                 </td>
                 <td
-                  className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
-                  style={{ left: 'calc(2.5rem + 100px)' }}
+                  className="z-10 bg-slate-50 px-3 py-3 text-left shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100 overflow-hidden"
+                  style={{ position: 'sticky', left: '8.5rem', minWidth: '5rem', maxWidth: '5rem', boxSizing: 'border-box' }}
                 >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
@@ -203,8 +229,8 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                   </span>
                 </td>
                 <td
-                  className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
-                  style={{ left: 'calc(2.5rem + 184px)' }}
+                  className="z-10 bg-slate-50 px-3 py-3 text-left shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100 overflow-hidden border-r border-gray-200"
+                  style={{ position: 'sticky', left: '13.5rem', minWidth: '5rem', maxWidth: '5rem', boxSizing: 'border-box' }}
                 >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
@@ -216,18 +242,22 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                     {trade.position}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {formatTimestamp(trade.openTimestamp)}
+                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-hidden">
+                  <span className="block truncate" title={formatTimestampGMT(trade.openTimestamp)}>
+                    {formatTimestampGMT(trade.openTimestamp)}
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-3 py-3 text-left text-sm overflow-hidden">
                   <span className={trade.position === 'LONG' ? 'text-green-700' : 'text-red-700'}>
                     {getOpenLegLabel(trade.position)}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {trade.closeTimestamp != null ? formatTimestamp(trade.closeTimestamp) : '—'}
+                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-hidden">
+                  <span className="block truncate" title={trade.closeTimestamp != null ? formatTimestampGMT(trade.closeTimestamp) : ''}>
+                    {trade.closeTimestamp != null ? formatTimestampGMT(trade.closeTimestamp) : '—'}
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-3 py-3 text-left text-sm overflow-hidden">
                   {trade.status === 'CLOSED' ? (
                     <span className={trade.position === 'LONG' ? 'text-red-700' : 'text-green-700'}>
                       {getCloseLegLabel(trade.position)}
@@ -236,43 +266,43 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                     '—'
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">{duration}</td>
-                <td className="px-4 py-3 text-sm text-right font-mono">
-                  {formatPrice(trade.openPrice)}
+                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-hidden">{duration}</td>
+                <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
+                  <span className="block truncate">{formatPrice(trade.openPrice)}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-mono">
-                  {trade.closePrice != null ? formatPrice(trade.closePrice) : '—'}
+                <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
+                  <span className="block truncate">{trade.closePrice != null ? formatPrice(trade.closePrice) : '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-mono">
-                  {formatPrice(trade.quantity)}
+                <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
+                  <span className="block truncate">{formatPrice(trade.quantity)}</span>
                 </td>
                 <td
-                  className={`px-4 py-3 text-sm text-right font-semibold ${
+                  className={`px-3 py-3 text-left text-sm font-semibold overflow-hidden ${
                     pnl != null
                       ? pnl >= 0 ? 'text-green-600' : 'text-red-600'
                       : 'text-gray-500'
                   }`}
                 >
-                  {pnl != null ? `${pnl >= 0 ? '+' : ''}${formatPrice(pnl)}` : '—'}
+                  <span className="block truncate">{pnl != null ? `${pnl >= 0 ? '+' : '-'}${formatPrice(Math.abs(pnl))}` : '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-right">
-                  {rMultiple != null ? rMultiple.toFixed(2) + 'R' : '—'}
+                <td className="px-3 py-3 text-left text-sm overflow-hidden">
+                  <span className="block truncate">{rMultiple != null ? rMultiple.toFixed(2) + 'R' : '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-mono">
-                  {trade.stopLoss != null ? formatPrice(trade.stopLoss) : '—'}
+                <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
+                  <span className="block truncate">{trade.stopLoss != null ? formatPrice(trade.stopLoss) : '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-3 py-3 text-left text-sm overflow-hidden">
                   {trade.tags?.length ? (
                     trade.tags.length === 1 ? (
-                      <span className="inline-block max-w-[100px] truncate px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                      <span className="inline-block truncate max-w-full px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium" title={trade.tags[0]}>
                         {trade.tags[0]}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block max-w-[100px] truncate px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium" title={trade.tags[0]}>
+                      <span className="inline-flex items-center gap-1.5 min-w-0">
+                        <span className="inline-block truncate max-w-full px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium" title={trade.tags[0]}>
                           {trade.tags[0]}
                         </span>
-                        <span className="text-xs font-medium text-violet-600">
+                        <span className="text-xs font-medium text-violet-600 flex-shrink-0">
                           +{trade.tags.length - 1} more
                         </span>
                       </span>
@@ -281,22 +311,20 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                     '—'
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate">
-                  {trade.notes || '—'}
+                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-hidden">
+                  <span className="block truncate" title={trade.notes || ''}>{trade.notes || '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-mono">
-                  {md ? formatPrice(parseFloat(md.last)) : '—'}
+                <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
+                  <span className="block truncate">{md ? formatPrice(parseFloat(md.last)) : '—'}</span>
                 </td>
                 <td
-                  className={`px-4 py-3 text-sm text-right ${
+                  className={`px-3 py-3 text-left text-sm overflow-hidden ${
                     md && parseFloat(md.daily_change_percentage) >= 0
                       ? 'text-green-600'
                       : 'text-red-600'
                   }`}
                 >
-                  {md
-                    ? parseFloat(md.daily_change_percentage).toFixed(2) + '%'
-                    : '—'}
+                  <span className="block truncate">{md ? parseFloat(md.daily_change_percentage).toFixed(2) + '%' : '—'}</span>
                 </td>
               </tr>
             );

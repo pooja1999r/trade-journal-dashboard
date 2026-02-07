@@ -64,3 +64,27 @@ export function calculateRMultiple(
   if (risk === 0) return null;
   return pnl / risk;
 }
+
+/** Format timestamp as date/time string in GMT (UTC) */
+export function formatTimestampGMT(ts: number): string {
+  return new Date(ts).toLocaleString(undefined, { timeZone: 'UTC' }) + ' GMT';
+}
+
+/** Format timestamp for datetime-local input value, in GMT (YYYY-MM-DDTHH:mm) */
+export function toDateTimeLocalGMT(ts: number): string {
+  const d = new Date(ts);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const h = String(d.getUTCHours()).padStart(2, '0');
+  const min = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day}T${h}:${min}`;
+}
+
+/** Parse datetime-local string as GMT and return timestamp */
+export function fromDateTimeLocalGMT(s: string): number {
+  const [datePart, timePart] = s.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const [h, min] = (timePart || '00:00').split(':').map(Number);
+  return Date.UTC(y, m - 1, d, h, min, 0, 0);
+}
