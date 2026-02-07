@@ -122,8 +122,13 @@ export const TradeListPage: React.FC = () => {
       setDemoLoaded(true);
       setShowCreateForm(false);
       setWsReconnectTrigger((k) => k + 1);
+      setFilters(defaultFilters);
+      saveFilters(defaultFilters);
+      requestAnimationFrame(() => {
+        loadTrades();
+      });
     },
-    [addTrade]
+    [addTrade, loadTrades]
   );
 
   const handleLoadDemoConfirm = useCallback(() => {
@@ -244,7 +249,10 @@ export const TradeListPage: React.FC = () => {
         <TradeDetailModal
           key={selectedTrade.id}
           trade={selectedTrade}
-          onClose={() => setSelectedTradeId(null)}
+          onClose={() => {
+            setSelectedTradeId(null);
+            setSelectedTradeIds([]);
+          }}
           onUpdate={updateTrade}
         />
       )}
