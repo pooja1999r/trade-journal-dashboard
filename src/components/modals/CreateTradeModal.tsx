@@ -82,6 +82,10 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
       setValidationError('Please enter valid open price and quantity');
       return;
     }
+    if (!Number.isInteger(qty)) {
+      setValidationError('Quantity must be a whole number (e.g. 1, 2, 10)');
+      return;
+    }
     if (status === 'CLOSED' && (isNaN(cp) || cp <= 0)) {
       setValidationError('Please enter valid close price for closed trades');
       return;
@@ -290,18 +294,23 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity *
+                Quantity * (whole numbers only)
               </label>
               <input
                 type="number"
-                step="any"
-                min={0}
+                step="1"
+                min={1}
                 value={quantity}
-                onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                onKeyDown={(e) => { if (e.key === '-' || e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v !== '' && parseFloat(v) < 0) return;
-                  setQuantity(v);
+                  if (v === '') {
+                    setQuantity('');
+                    return;
+                  }
+                  const n = parseFloat(v);
+                  if (n < 0 || !Number.isInteger(n)) return;
+                  setQuantity(String(Math.floor(n)));
                 }}
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 required
