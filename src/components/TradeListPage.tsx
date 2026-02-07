@@ -15,7 +15,7 @@ import { ConfirmModal } from './modals/ConfirmModal';
 import { filterTrades, sortTradesByOpenTimestamp } from '../utils/tradeFilters';
 import { tradeStorageService } from '../services/tradeStorageService';
 import { loadFilters, saveFilters } from '../utils/filterStorage';
-import type { Trade, TradeFilters as TradeFiltersType } from './constants/types';
+import { CONFIRM_MODAL_VARIANT, type Trade, type TradeFilters as TradeFiltersType } from './constants/types';
 import { mockTrades } from '../data/mockTrades';
 
 const DEMO_LOADED_KEY = 'trade_journal_demo_loaded';
@@ -163,7 +163,7 @@ export const TradeListPage: React.FC = () => {
                       : 'bg-blue-500 hover:bg-blue-400'
                   }`}
                 >
-                  Load Demo Data
+                  Try sample list
                 </button>
               )}
               <button
@@ -197,7 +197,7 @@ export const TradeListPage: React.FC = () => {
               No trades yet
             </h3>
             <p className="text-gray-500 mb-4">
-              Create a trade or load demo data to get started.
+              Create a trade or try the sample list to get started.
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
@@ -267,9 +267,9 @@ export const TradeListPage: React.FC = () => {
 
       <ConfirmModal
         isOpen={showLoadDemoConfirm}
-        title="Load Demo Data?"
-        message="Are you sure you want to load sample trades? This will add demo data to your trade journal."
-        confirmLabel="Load Demo"
+        title="Try sample list?"
+        message="This will add sample trades to your journal so you can explore the app. You can delete them anytime."
+        confirmLabel="Add sample list"
         cancelLabel="Cancel"
         onConfirm={handleLoadDemoConfirm}
         onCancel={() => setShowLoadDemoConfirm(false)}
@@ -283,6 +283,7 @@ export const TradeListPage: React.FC = () => {
             ? 'Are you sure you want to delete this trade? This cannot be undone.'
             : `Are you sure you want to delete ${selectedTradeIds.length} selected trades? This cannot be undone.`
         }
+        variant={CONFIRM_MODAL_VARIANT.DANGER}
         confirmLabel="Delete"
         cancelLabel="Cancel"
         onConfirm={handleConfirmDeleteSelected}

@@ -63,7 +63,12 @@ code {
   background: #9ca3af;
 }
 
-/* Dropdown panel scroll - thin, subtle */
+/* Dropdown panel scroll - thin, subtle (SelectBox and filter dropdowns) */
+.dropdown-panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
 .dropdown-panel-scroll::-webkit-scrollbar {
   width: 6px;
 }

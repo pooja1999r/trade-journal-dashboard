@@ -93,3 +93,12 @@ export interface TooltipInfoItem {
 
 /** Filter dropdown keys used in TradeFilters */
 export type DropdownKey = 'symbol' | 'position' | 'status' | 'entry' | 'tags';
+
+/** ConfirmModal theme: controls title bar, confirm button, and overall tone */
+export const CONFIRM_MODAL_VARIANT = {
+  DEFAULT: 'default',
+  DANGER: 'danger',
+  WARNING: 'warning',
+} as const;
+
+export type ConfirmModalVariant = (typeof CONFIRM_MODAL_VARIANT)[keyof typeof CONFIRM_MODAL_VARIANT];
