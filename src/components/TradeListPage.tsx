@@ -42,7 +42,7 @@ export const TradeListPage: React.FC = () => {
     [trades]
   );
 
-  const { data: marketData, isLoading, error } = useMarketData(symbols, wsReconnectTrigger);
+  const { data: marketData,  error } = useMarketData(symbols, wsReconnectTrigger);
 
   const [filters, setFilters] = useState<TradeFiltersType>(() => {
     const loaded = loadFilters();
@@ -93,10 +93,9 @@ export const TradeListPage: React.FC = () => {
       localStorage.setItem(DEMO_LOADED_KEY, 'true');
       setDemoLoaded(true);
       setShowCreateForm(false);
-      loadTrades();
       setWsReconnectTrigger((k) => k + 1);
     },
-    [addTrade, loadTrades]
+    [addTrade]
   );
 
   const handleLoadDemoConfirm = useCallback(() => {
@@ -157,12 +156,6 @@ export const TradeListPage: React.FC = () => {
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
-
-        {isLoading && symbols.length > 0 && (
-          <div className="mb-4 text-sm text-gray-500">
-            Loading market data...
-          </div>
-        )}
 
         {filteredTrades.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">

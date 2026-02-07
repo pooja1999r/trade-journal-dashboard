@@ -90,6 +90,9 @@ export const TradeTable: React.FC<TradeTableProps> = ({
               Close Price
             </th>
             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+              Quantity
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
               PNL
             </th>
             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
@@ -190,6 +193,9 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-mono">
                   {trade.closePrice != null ? formatPrice(trade.closePrice) : '—'}
+                </td>
+                <td className="px-4 py-3 text-sm text-right font-mono">
+                  {formatPrice(trade.quantity)}
                 </td>
                 <td
                   className={`px-4 py-3 text-sm text-right font-semibold ${
