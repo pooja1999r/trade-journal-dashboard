@@ -1,10 +1,10 @@
 /**
  * TradeTable Component
  * Renders trades in a table with all required columns.
- * Sorted by openTimestamp (latest first).
+ * First column: checkbox for selection. Row click opens detail modal.
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import type { Trade, MarketDataMap, Position } from './constants/types';
 import {
   calculatePnL,
@@ -15,6 +15,9 @@ import {
 interface TradeTableProps {
   trades: Trade[];
   marketData: MarketDataMap;
+  selectedTradeIds: string[];
+  onToggleTrade: (tradeId: string) => void;
+  onSelectAllChange?: (selected: boolean) => void;
   onRowClick: (trade: Trade) => void;
 }
 
@@ -38,33 +41,65 @@ function getCloseLegLabel(position: Position): string {
 export const TradeTable: React.FC<TradeTableProps> = ({
   trades,
   marketData,
+  selectedTradeIds,
+  onToggleTrade,
+  onSelectAllChange,
   onRowClick,
 }) => {
+  const allVisibleSelected =
+    trades.length > 0 && trades.every((t) => selectedTradeIds.includes(t.id));
+  const someVisibleSelected =
+    trades.length > 0 && trades.some((t) => selectedTradeIds.includes(t.id));
+  const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const el = headerCheckboxRef.current;
+    if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected;
+  }, [someVisibleSelected, allVisibleSelected]);
+
   return (
     <div
-      className="trade-table-scroll relative z-0 overflow-x-auto overflow-y-visible rounded-lg border border-gray-200"
+      className="trade-table-scroll relative z-0 overflow-x-auto overflow-y-visible"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#d1d5db #f9fafb',
       }}
     >
-      <table className="min-w-full divide-y divide-gray-200">
+      <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: 'auto' }}>
         <thead className="bg-gray-50">
           <tr>
             <th
+              className="sticky left-0 z-20 w-10 min-w-[2.5rem] bg-slate-100 px-3 py-3 text-center shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ position: 'sticky', left: 0 }}
+            >
+              {onSelectAllChange ? (
+                <input
+                  ref={headerCheckboxRef}
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={(e) => onSelectAllChange(e.target.checked)}
+                  className="h-4 w-4 rounded border border-gray-400 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                  aria-label="Select all rows"
+                />
+              ) : (
+                <span className="sr-only">Select</span>
+              )}
+            </th>
+            <th
               className="sticky left-0 z-20 min-w-[100px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+              style={{ left: '2.5rem' }}
             >
               Symbol
             </th>
             <th
               className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ left: '100px' }}
+              style={{ left: 'calc(2.5rem + 100px)' }}
             >
               Status
             </th>
             <th
               className="sticky z-20 min-w-[84px] bg-slate-100 px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
-              style={{ left: '184px' }}
+              style={{ left: 'calc(2.5rem + 184px)' }}
             >
               Position
             </th>
@@ -132,16 +167,30 @@ export const TradeTable: React.FC<TradeTableProps> = ({
               <tr
                 key={trade.id}
                 onClick={() => onRowClick(trade)}
-                className="group cursor-pointer transition-colors hover:bg-blue-50"
+                className="cursor-pointer transition-colors hover:bg-blue-50"
               >
                 <td
+                  className="sticky left-0 z-10 w-10 min-w-[2.5rem] bg-slate-50 px-3 py-3 text-center align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors hover:bg-slate-100"
+                  style={{ position: 'sticky', left: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTradeIds.includes(trade.id)}
+                    onChange={() => onToggleTrade(trade.id)}
+                    className="h-4 w-4 rounded border border-gray-400 bg-white text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                    aria-label={`Select ${trade.symbol}`}
+                  />
+                </td>
+                <td
                   className="sticky left-0 z-10 min-w-[100px] bg-slate-50 px-4 py-3 text-sm font-medium text-gray-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
+                  style={{ left: '2.5rem' }}
                 >
                   {trade.symbol}
                 </td>
                 <td
                   className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
-                  style={{ left: '100px' }}
+                  style={{ left: 'calc(2.5rem + 100px)' }}
                 >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
@@ -155,7 +204,7 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                 </td>
                 <td
                   className="sticky z-10 min-w-[84px] bg-slate-50 px-4 py-3 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors group-hover:bg-slate-100"
-                  style={{ left: '184px' }}
+                  style={{ left: 'calc(2.5rem + 184px)' }}
                 >
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${

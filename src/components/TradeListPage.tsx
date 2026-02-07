@@ -34,7 +34,7 @@ const defaultFilters: TradeFiltersType = {
 };
 
 export const TradeListPage: React.FC = () => {
-  const { trades, addTrade, updateTrade, loadTrades } = useTrades();
+  const { trades, addTrade, updateTrade, deleteTrade, loadTrades } = useTrades();
   const [wsReconnectTrigger, setWsReconnectTrigger] = useState(0);
 
   const symbols = useMemo(
@@ -54,8 +54,10 @@ export const TradeListPage: React.FC = () => {
     saveFilters(f);
   }, []);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showLoadDemoConfirm, setShowLoadDemoConfirm] = useState(false);
+  const [showDeleteSelectedConfirm, setShowDeleteSelectedConfirm] = useState(false);
   const [demoLoaded, setDemoLoaded] = useState(getDemoLoaded);
   const [loadDemoHighlighted, setLoadDemoHighlighted] = useState(false);
 
@@ -86,6 +88,32 @@ export const TradeListPage: React.FC = () => {
   const handleRowClick = useCallback((trade: Trade) => {
     setSelectedTradeId(trade.id);
   }, []);
+
+  const handleToggleTrade = useCallback((tradeId: string) => {
+    setSelectedTradeIds((prev) =>
+      prev.includes(tradeId) ? prev.filter((id) => id !== tradeId) : [...prev, tradeId]
+    );
+  }, []);
+
+  const handleSelectAllChange = useCallback((selected: boolean) => {
+    setSelectedTradeIds(selected ? filteredTrades.map((t) => t.id) : []);
+  }, [filteredTrades]);
+
+  const handleEditSelected = useCallback(() => {
+    if (selectedTradeIds.length === 1) {
+      setSelectedTradeId(selectedTradeIds[0]);
+    }
+  }, [selectedTradeIds]);
+
+  const handleDeleteSelectedClick = useCallback(() => {
+    setShowDeleteSelectedConfirm(true);
+  }, []);
+
+  const handleConfirmDeleteSelected = useCallback(() => {
+    selectedTradeIds.forEach((id) => deleteTrade(id));
+    setSelectedTradeIds([]);
+    setShowDeleteSelectedConfirm(false);
+  }, [selectedTradeIds, deleteTrade]);
 
   const handleCreateTrade = useCallback(
     (trade: Trade) => {
@@ -174,11 +202,41 @@ export const TradeListPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <TradeTable
-            trades={filteredTrades}
-            marketData={marketData}
-            onRowClick={handleRowClick}
-          />
+          <div className="rounded-lg border border-gray-200 bg-white shadow overflow-hidden">
+            <div className="flex min-h-[2.75rem] items-center justify-between border-b border-gray-200 bg-gray-50/80 px-4 py-2">
+              <h2 className="text-sm font-semibold text-gray-700">Trade Journal Store</h2>
+              {selectedTradeIds.length > 0 && (
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={handleEditSelected}
+                    disabled={selectedTradeIds.length !== 1}
+                    className="rounded border border-violet-400 bg-transparent px-2 py-0.5 text-xs font-medium text-violet-600 transition-colors hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:border-gray-300 disabled:text-gray-400"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelectedClick}
+                    className="bg-transparent px-0 py-0.5 text-xs font-medium text-rose-500 transition-colors hover:text-rose-600 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {selectedTradeIds.length} selected
+                  </span>
+                </div>
+              )}
+            </div>
+            <TradeTable
+              trades={filteredTrades}
+              marketData={marketData}
+              selectedTradeIds={selectedTradeIds}
+              onToggleTrade={handleToggleTrade}
+              onSelectAllChange={handleSelectAllChange}
+              onRowClick={handleRowClick}
+            />
+          </div>
         )}
       </main>
 
@@ -207,6 +265,20 @@ export const TradeListPage: React.FC = () => {
         cancelLabel="Cancel"
         onConfirm={handleLoadDemoConfirm}
         onCancel={() => setShowLoadDemoConfirm(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteSelectedConfirm}
+        title="Delete trade(s)?"
+        message={
+          selectedTradeIds.length === 1
+            ? 'Are you sure you want to delete this trade? This cannot be undone.'
+            : `Are you sure you want to delete ${selectedTradeIds.length} selected trades? This cannot be undone.`
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDeleteSelected}
+        onCancel={() => setShowDeleteSelectedConfirm(false)}
       />
     </div>
   );
