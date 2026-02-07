@@ -94,12 +94,13 @@ App
 
 ### Responsibilities
 - **TradeListPage**: Orchestrates useTrades, useMarketData, filters, modals; passes filtered trades and marketData to TradeTable.
-- **TradeTable**: Renders table; uses marketData[trade.symbol] for current price and daily %; sticky columns, selection.
+- **TradeTable**: Renders table; uses marketData[trade.symbol] for current price and daily %; sticky columns, selection; Notes column uses TruncateWithTooltip (full text on hover when truncated).
 - **TradeFilters**: Filter UI using SelectBox (symbol, position, status, entry, tags); search notes; calls onFiltersChange.
-- **SelectBox** (ui-components): Reusable single/multi select dropdown; used in TradeFilters and CreateTradeModal.
+- **SelectBox** (ui-components): Reusable single/multi select dropdown; optional dropdownMaxHeight; used in TradeFilters and CreateTradeModal.
+- **TruncateWithTooltip** (ui-components): Truncates text with ellipsis; shows full text in a portal tooltip on hover when content overflows.
 - **CreateTradeModal**: Form for new trade; symbol from useCoins; onSubmit calls addTrade and can trigger WebSocket reconnect.
 - **TradeDetailModal**: Trade summary, chart (Recharts), editable notes/tags/status; onUpdate calls updateTrade.
-- **ConfirmModal**: Title + close button; variant (default/danger/warning) only affects confirm button color.
+- **ConfirmModal**: Header shows title and close button; variant (default/danger/warning) sets the confirm button color only.
 
 ## Data Flow Examples
 
@@ -121,7 +122,7 @@ App
 |--------|------|
 | **tradeStorageService** | getAll(), save(), getUniqueSymbols(); key `trade_journal_trades` |
 | **marketDataService** | subscribeMarketData(symbols, callback) → WebSocket, MarketDataMap callback, cleanup |
-| **coinsService** | fetchCoinsList() from Binance exchangeInfo (symbol list for CreateTradeModal) |
+| **coinsService** | fetchCoinsList() from Binance exchangeInfo (symbol list); fetchTickerPrice(symbol) for current price (e.g. CreateTradeModal open price default) |
 
 ## Calculations (utils/calculations.ts)
 

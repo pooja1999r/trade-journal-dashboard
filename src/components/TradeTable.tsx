@@ -4,7 +4,7 @@
  * First column: checkbox for selection. Row click opens detail modal.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import type { Trade, MarketDataMap, Position } from './constants/types';
 import {
   calculatePnL,
@@ -12,6 +12,7 @@ import {
   calculateRMultiple,
   formatTimestampGMT,
 } from '../utils/calculations';
+import { TruncateWithTooltip } from './ui-components/TruncateWithTooltip';
 
 interface TradeTableProps {
   trades: Trade[];
@@ -48,6 +49,7 @@ export const TradeTable: React.FC<TradeTableProps> = ({
   const someVisibleSelected =
     trades.length > 0 && trades.some((t) => selectedTradeIds.includes(t.id));
   const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
+  const [hoveredNotesTradeId, setHoveredNotesTradeId] = useState<string | null>(null);
 
   useEffect(() => {
     const el = headerCheckboxRef.current;
@@ -90,7 +92,7 @@ export const TradeTable: React.FC<TradeTableProps> = ({
           <col style={{ width: '6rem' }} />
           <col style={{ width: '10rem' }} />
           <col style={{ width: '6rem' }} />
-          <col style={{ width: '3.5rem' }} />
+          <col style={{ width: '4.5rem' }} />
         </colgroup>
         <thead className="bg-gray-50">
           <tr>
@@ -193,7 +195,7 @@ export const TradeTable: React.FC<TradeTableProps> = ({
               <tr
                 key={trade.id}
                 onClick={() => onRowClick(trade)}
-                className="cursor-pointer transition-colors hover:bg-blue-50"
+                className={`cursor-pointer transition-colors hover:bg-blue-50 ${hoveredNotesTradeId === trade.id ? 'relative z-[30]' : ''}`}
               >
                 <td
                   className="z-10 bg-slate-50 px-2 py-3 text-center align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] transition-colors hover:bg-slate-100"
@@ -311,8 +313,14 @@ export const TradeTable: React.FC<TradeTableProps> = ({
                     '—'
                   )}
                 </td>
-                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-hidden">
-                  <span className="block truncate" title={trade.notes || ''}>{trade.notes || '—'}</span>
+                <td className="px-3 py-3 text-left text-sm text-gray-600 overflow-visible max-w-[10rem]" style={{ maxWidth: '10rem' }}>
+                  <TruncateWithTooltip
+                    text={trade.notes ?? ''}
+                    placeholder="—"
+                    maxWidth="10rem"
+                    placement="top"
+                    onTooltipChange={(visible) => setHoveredNotesTradeId(visible ? trade.id : null)}
+                  />
                 </td>
                 <td className="px-3 py-3 text-left text-sm font-mono overflow-hidden">
                   <span className="block truncate">{md ? formatPrice(parseFloat(md.last)) : '—'}</span>

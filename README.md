@@ -67,7 +67,8 @@ src/
 │   │   ├── types.ts        # Trade, MarketDataMap, filters
 │   │   └── filterOptions.ts
 │   ├── ui-components/
-│   │   └── SelectBox.tsx   # Reusable select dropdown
+│   │   ├── SelectBox.tsx           # Reusable single/multi select dropdown
+│   │   └── TruncateWithTooltip.tsx # Truncate text, tooltip on hover when overflow
 │   ├── modals/
 │   │   ├── CreateTradeModal.tsx
 │   │   ├── TradeDetailModal.tsx

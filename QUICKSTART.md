@@ -57,7 +57,7 @@ npm run lint     # Run ESLint
 src/
 ├── components/            # UI
 │   ├── constants/           # types.ts, filterOptions.ts
-│   ├── ui-components/       # SelectBox
+│   ├── ui-components/       # SelectBox, TruncateWithTooltip
 │   ├── TradeListPage.tsx    # Main page
 │   ├── TradeTable.tsx       # Table + market data columns
 │   ├── TradeFilters.tsx
