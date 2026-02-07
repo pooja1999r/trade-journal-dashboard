@@ -14,24 +14,24 @@ npm run dev
 
 ## First Time Using the App?
 
-1. Click **"Load Demo Data"** to see example trades
-2. Click **"+ New Trade"** to create your first trade
-3. Explore the three-column layout: BUY | TRADE | SELL
+1. Click **"Load Demo Data"** to add sample trades (e.g. BTCUSDT, ETHUSDT, ETHBTC, LTCBTC, BNBBTC).
+2. Watch the **Current Price** and **Daily %** columns update from Binance (live WebSocket).
+3. Click **"Create New Trade"** to add your own trade.
+4. Click a row to open the **Trade Detail** modal (chart, notes, tags).
 
 ## Key Features to Try
 
 ### Create a Trade
-- Symbol: AAPL
-- Direction: LONG
-- Add Buy Leg: Price $150, Quantity 100
-- Add Sell Leg: Price $155, Quantity 100
-- Click "Create Trade"
+- Symbol: e.g. **BTCUSDT** or **ETHUSDT**
+- Position: **LONG** or **SHORT**
+- Open price, quantity, optional close price and stop loss
+- Add notes and tags, then click create
 
 ### Filter Trades
-Use the filter buttons (All / Open / Closed) to organize your view.
+Use the filters (symbol, position, status, tags, search notes) to narrow the list.
 
-### Close a Trade
-Open trades can be closed using the "Close Trade" button in the center column.
+### Edit a Trade
+Click a row → in the detail modal, edit notes or tags and save.
 
 ## Project Commands
 
@@ -42,27 +42,36 @@ npm run preview  # Preview production build
 npm run lint     # Run ESLint
 ```
 
-## Tech Stack Overview
+## Tech Stack
 
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Redux Toolkit** - State management
-- **Tailwind CSS** - Styling
-- **Vite** - Build tool
+- **React 18** – UI
+- **TypeScript** – Types
+- **Tailwind CSS** – Styling
+- **Vite** – Build and dev server
+- **Recharts** – Charts in detail modal
+- **Binance WebSocket** – Live prices (no API key)
 
 ## File Structure Highlights
 
 ```
 src/
-├── components/       # UI components
-│   ├── TradeCard/   # Main trade display (3-column)
-│   ├── TradeForm/   # Create trade modal
-│   └── TradeLegList/ # Buy/sell leg lists
-├── store/           # Redux state
-├── utils/           # Helper functions
-└── pages/           # Page components
+├── components/          # UI
+│   ├── TradeListPage.tsx   # Main page
+│   ├── TradeTable.tsx      # Table + market data columns
+│   ├── TradeFilters.tsx
+│   └── modals/            # CreateTrade, TradeDetail, Confirm
+├── hooks/
+│   ├── useTrades.ts       # Trades + localStorage
+│   └── useMarketData.ts   # Binance WebSocket
+├── services/
+│   ├── tradeStorageService.ts
+│   └── marketDataService.ts
+├── store/                 # Redux (optional slice)
+└── utils/                 # calculations, filters, storage
 ```
 
 ## Need Help?
 
-Check the main [README.md](./README.md) for detailed documentation.
+- Full docs: [README.md](./README.md)
+- Deployment: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- Architecture: [ARCHITECTURE.md](./ARCHITECTURE.md)

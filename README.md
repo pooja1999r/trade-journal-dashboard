@@ -1,16 +1,16 @@
 # Trade Journal
 
-A production-quality React application for tracking crypto trades with live market data integration.
+A production-quality React application for tracking crypto trades with **live Binance WebSocket** market data.
 
 ## 📋 Overview
 
-Trade Journal is a frontend application for traders to record, visualize, and manage trading positions. It fetches **live market data** from a crypto price API for symbols stored in localStorage, merging it with user-recorded trade data. Trades support LONG/SHORT positions with open/close prices, PNL, R-multiple, and more.
+Trade Journal is a frontend application for traders to record, visualize, and manage trading positions. It subscribes to **Binance ticker streams** for symbols from your trades and shows live prices and daily % change in the table. Trades support LONG/SHORT positions with open/close prices, PNL, R-multiple, stop loss, notes, and tags.
 
 The application emphasizes:
-- **Clean state modeling** with normalized data structures
-- **Clear UI/UX** with a distinctive three-column layout (BUY | TRADE | SELL)
-- **Scalable architecture** ready for production deployment
-- **Type safety** with TypeScript throughout
+- **Clean state modeling** with TypeScript types and localStorage
+- **Real-time market data** via Binance WebSocket (no API key required)
+- **Clear UI** with trade table, filters, and detail modal
+- **Scalable structure** with services, hooks, and components
 
 ## ✨ Features
 
@@ -18,14 +18,14 @@ The application emphasizes:
 - **Trade Management**
   - Create trades with symbol, position (LONG/SHORT), open/close timestamps and prices
   - Stop loss, R-value, notes, tags
-  - Editable notes and tags in detail modal
+  - Edit notes and tags in the detail modal
 
 - **Trade Table**
-  - Symbol, Position, Open/Close Time, Duration
+  - Symbol, Status, Position, Open/Close Time, Duration
   - Open/Close Price, PNL (green/red), R-Value, Stop Loss
   - Tags, Notes
-  - **Current Market Price** and Daily % Change from API
-  - Sorted by openTimestamp (latest first)
+  - **Current Price** and **Daily % Change** from Binance (live)
+  - Sorted by open time (latest first)
 
 - **Derived Fields**
   - PNL: LONG → (closePrice − openPrice) × quantity; SHORT → (openPrice − closePrice) × quantity
@@ -33,57 +33,69 @@ The application emphasizes:
   - R-Multiple: PNL ÷ risk per trade
 
 - **Market Data**
-  - Fetches live prices only for symbols in localStorage
-  - API key via Authorization header
-  - Falls back to mock data when API not configured
-  - Batched/parallel requests
+  - **Binance WebSocket** ticker streams for symbols in your trades
+  - No API key needed (public streams)
+  - Live updates; table re-renders on new data
+  - Single connection, batched streams
 
 - **Filters & Search**
-  - Filter by symbol, position (LONG/SHORT), tags (multi-select)
+  - Filter by symbol, position (LONG/SHORT), status, tags
   - Search by notes text
   - Filters persisted in localStorage
 
-- **Trade Detail Modal**
-  - Row click opens modal with trade summary
-  - Entry & exit markers on line chart (Recharts)
-  - Editable notes & tags
+- **Modals**
+  - **Trade Detail**: Row click opens modal with trade summary and chart (Recharts)
+  - **Create Trade**: Form for new trade
+  - **Confirm**: e.g. Load Demo Data
 
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| **React 18** | UI framework with functional components and hooks |
-| **TypeScript** | Type safety and better developer experience |
-| **Redux Toolkit** | Predictable state management with modern best practices |
-| **Tailwind CSS** | Utility-first styling for rapid UI development |
-| **Vite** | Fast build tool and dev server |
+| **React 18** | UI with functional components and hooks |
+| **TypeScript** | Type safety |
+| **Redux Toolkit** | Optional store (trade slice); main trade list uses `useTrades` + localStorage |
+| **Tailwind CSS** | Utility-first styling |
+| **Vite** | Build and dev server |
+| **Recharts** | Charts in trade detail modal |
 
 ## 📦 Project Structure
 
 ```
 src/
 ├── components/
-│   ├── TradeTable/        # Main trade table with all columns
-│   ├── TradeFilters/      # Symbol, position, tags, search
-│   ├── TradeDetailModal/  # Detail view with chart (Recharts)
-│   └── CreateTradeForm/   # Create trade modal
-├── pages/
-│   └── TradeListPage.tsx  # Main page
-├── services/
-│   ├── tradeStorageService.ts   # localStorage (key: trade_journal_trades)
-│   └── marketDataService.ts     # Crypto price API
+│   ├── constants/
+│   │   ├── types.ts        # Trade, MarketDataMap, filters
+│   │   └── tooltipInfo.ts
+│   ├── modals/
+│   │   ├── CreateTradeModal.tsx
+│   │   ├── TradeDetailModal.tsx
+│   │   └── ConfirmModal.tsx
+│   ├── TradeListPage.tsx   # Main page
+│   ├── TradeTable.tsx      # Table with market data columns
+│   ├── TradeFilters.tsx
+│   └── Header.tsx
 ├── hooks/
-│   ├── useTrades.ts       # Trade state + localStorage sync
-│   └── useMarketData.ts   # Fetch market data for trade symbols
-├── types/
-│   └── index.ts           # Trade, MarketData, filters
+│   ├── useTrades.ts        # Trade state + localStorage sync
+│   ├── useMarketData.ts    # Binance WebSocket subscription
+│   └── useCoins.ts         # Optional symbol list
+├── services/
+│   ├── tradeStorageService.ts   # localStorage (trade_journal_trades)
+│   ├── marketDataService.ts     # Binance WebSocket → MarketDataMap
+│   ├── binanceWebSocketService.ts # Low-level WS (callback + symbols)
+│   └── coinsService.ts          # Binance exchangeInfo (symbols)
+├── store/
+│   ├── store.ts
+│   ├── tradeSlice.ts
+│   ├── hooks.ts
+│   └── types.ts
 ├── utils/
 │   ├── calculations.ts    # PNL, duration, R-multiple
-│   ├── tradeFilters.ts    # Client-side filtering
-│   ├── filterStorage.ts   # Persist filters
-│   └── mockMarketData.ts  # Fallback when API unavailable
+│   ├── tradeFilters.ts
+│   ├── filterStorage.ts
+│   └── storage.ts
 ├── data/
-│   └── mockTrades.ts      # Demo trades
+│   └── mockTrades.ts      # Demo trades (e.g. ETHBTC, LTCBTC, BTCUSDT)
 ├── App.tsx
 ├── main.tsx
 └── index.css
@@ -103,42 +115,16 @@ npm install
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+The app runs at **http://localhost:5173**.
 
-### API Configuration (Optional)
+### Market Data
 
-To use live market data, create `.env` and set:
-
-```
-VITE_API_URL=https://your-api.com/crypto/prices
-VITE_API_KEY=your-api-key
-```
-
-API must return data in this shape:
-
-```json
-{
-  "status": "success",
-  "symbols": [
-    {
-      "symbol": "BTC",
-      "last": "63556.38",
-      "daily_change_percentage": "-13.53",
-      ...
-    }
-  ]
-}
-```
-
-When not configured, **mock data** is used.
+Live prices use **Binance public WebSocket** streams. No API key or env vars are required. The app subscribes only to symbols that appear in your trades (e.g. BTCUSDT, ETHUSDT, ETHBTC). Data is transformed into `MarketDataMap` and the table shows **Current Price** and **Daily %** per symbol.
 
 ### Building for Production
 
 ```bash
-# Create optimized production build
 npm run build
-
-# Preview production build locally
 npm run preview
 ```
 
@@ -146,147 +132,50 @@ npm run preview
 
 ### Creating a Trade
 
-1. Click **"+ New Trade"** button in the header
-2. Enter the symbol (e.g., AAPL, BTCUSDT)
-3. Select direction (LONG or SHORT)
-4. Add buy legs:
-   - Enter price and quantity
-   - Select timestamp
-   - Click "+ Add Buy Leg"
-5. Add sell legs (same process)
-6. Optionally add notes
-7. Click "Create Trade"
+1. Click **"Create New Trade"** in the header.
+2. Enter symbol (e.g. BTCUSDT, ETHBTC).
+3. Choose position (LONG or SHORT).
+4. Set open time, open price, quantity; optionally close time/price, stop loss, notes, tags.
+5. Click create; the new trade appears in the table and market data subscribes to its symbol if needed.
 
-### Understanding Trade Status
+### Trade Status
 
-- **OPEN**: Trade has buy legs but no sell legs (position is active)
-- **CLOSED**: Trade has both buy and sell legs (position is closed)
+- **OPEN**: Position still held (no close price/time).
+- **CLOSED**: Position closed (close price and close timestamp set).
 
 ### Loading Demo Data
 
-Click **"Load Demo Data"** in the header to populate the application with sample trades showcasing different scenarios.
+Click **"Load Demo Data"** to add sample trades (symbols include ETHBTC, LTCBTC, BNBBTC, BTCUSDT, ETHUSDT). Useful to see live market data in the table.
 
-## 🏗️ Architecture Decisions
+## 🏗️ Architecture Notes
 
-### State Management
-**Decision**: Redux Toolkit
-**Rationale**: Provides predictable state management with minimal boilerplate. The centralized store makes it easy to add features like undo/redo, time-travel debugging, or middleware for analytics.
+- **Trades**: `useTrades` + `tradeStorageService` (localStorage). List is derived from storage; create/update/delete update storage and state.
+- **Market data**: `useMarketData(symbols)` uses `marketDataService.subscribeMarketData(symbols, callback)`. The service keeps a single WebSocket, accumulates ticker updates into a `MarketDataMap`, and calls the callback so the table re-renders with latest price and daily %.
+- **Types**: Trade and market data types live in `components/constants/types.ts`; store types in `store/types.ts`.
 
-### Type System
-**Decision**: Strict TypeScript with explicit types
-**Rationale**: Prevents runtime errors, improves IDE support, and serves as living documentation. The `types.ts` file defines the domain model explicitly.
+## 🎯 Assumptions & Trade-offs
 
-### Component Architecture
-**Decision**: Functional components with hooks
-**Rationale**: Modern React best practice. Easier to test, compose, and reason about. No class component overhead.
+- **Single user, browser-only**: No auth; data in localStorage.
+- **Binance only**: Market data from Binance public streams; symbol format matches Binance (e.g. BTCUSDT).
+- **Desktop-first**: Table and filters optimized for desktop; responsive where applicable.
 
-### Styling Approach
-**Decision**: Tailwind CSS
-**Rationale**: Rapid development, consistent design system, excellent tree-shaking for production. Avoids CSS naming conflicts and makes responsive design trivial.
+## 🔮 Possible Improvements
 
-### Persistence Layer
-**Decision**: localStorage with clean abstraction
-**Rationale**: No backend required for this assignment. The `storage.ts` utility provides a clean interface that could easily be swapped for an API client later.
-
-## 🎯 Trade-offs & Assumptions
-
-### Assumptions
-1. **Single User**: No authentication or multi-user support
-2. **Browser Storage**: localStorage is sufficient for data persistence
-3. **No Real-time Data**: All trade data is manually entered
-4. **Desktop First**: UI optimized for desktop viewing (responsive design possible)
-
-### Trade-offs
-1. **Redux vs Context API**: Chose Redux for scalability even though Context might be simpler for this scope
-2. **No Backend**: Saves complexity but limits data portability
-3. **Inline Actions**: Trade actions (close, delete) are on each card for quick access
-4. **No Editing**: Trades can't be edited after creation (only deleted) to maintain audit trail integrity
-
-## 🔮 Future Improvements
-
-### Feature Enhancements
-- [ ] **Edit Trades**: Allow modifying existing trades and legs
-- [ ] **Trade Search**: Full-text search by symbol or notes
-- [ ] **Advanced Filtering**: Filter by date range, symbol, P&L
-- [ ] **Export/Import**: CSV/JSON export for backup and analysis
-- [ ] **Charts**: Visual P&L charts and trade history graphs
-- [ ] **Tags**: Categorize trades by strategy, market condition, etc.
-- [ ] **Trade Journal**: Long-form notes and attachments per trade
-
-### Technical Improvements
-- [ ] **Backend Integration**: Replace localStorage with REST API
-- [ ] **Authentication**: User accounts and secure data storage
-- [ ] **Real-time Updates**: WebSocket for live price updates
-- [ ] **Mobile App**: React Native version
-- [ ] **Unit Tests**: Jest + React Testing Library
-- [ ] **E2E Tests**: Playwright or Cypress
-- [ ] **Performance**: Virtual scrolling for large trade lists
-- [ ] **Offline Support**: Service Worker and PWA features
-- [ ] **Dark Mode**: Theme toggle
-- [ ] **Accessibility**: Full WCAG 2.1 AA compliance
-
-### UX Improvements
-- [ ] **Keyboard Shortcuts**: Quick actions without mouse
-- [ ] **Undo/Redo**: Reverse accidental actions
-- [ ] **Bulk Operations**: Close/delete multiple trades
-- [ ] **Trade Templates**: Quick-create common trade types
-- [ ] **Notifications**: Alerts for profit targets or stop losses
-- [ ] **Onboarding**: Interactive tutorial for first-time users
+- Backend + auth for multi-device sync
+- Export/import (CSV/JSON)
+- More exchanges or data sources
+- Unit and E2E tests
+- PWA / offline support
+- Dark mode and accessibility
 
 ## 🚢 Deployment
 
-### Vercel Deployment
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel
-
-# Deploy to production
-vercel --prod
-```
-
-### Netlify Deployment
-
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Build the project
-npm run build
-
-# Deploy
-netlify deploy --prod --dir=dist
-```
-
-### Environment Configuration
-
-No environment variables required for the base application. If adding backend integration:
-
-```env
-VITE_API_URL=https://your-api.com
-VITE_API_KEY=your-api-key
-```
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for Vercel, Netlify, GitHub Pages, and static host options.
 
 ## 📄 License
 
-This project is created for a technical hiring assignment.
-
-## 🤝 Contributing
-
-This is a demonstration project. For production use, consider:
-- Adding comprehensive test coverage
-- Implementing proper error boundaries
-- Adding analytics and monitoring
-- Setting up CI/CD pipelines
-- Implementing proper logging
-
-## 📞 Support
-
-For questions or issues with this project, please review the code comments and architecture documentation above.
+This project is for demonstration purposes.
 
 ---
 
-**Built with ❤️ using React, TypeScript, and Redux Toolkit**
+**Built with React, TypeScript, and Tailwind**

@@ -1,5 +1,7 @@
 # Deployment Guide
 
+Trade Journal is a static React (Vite) app. No backend or API keys are required for core features; market data uses Binance public WebSocket from the browser.
+
 ## Quick Deploy Options
 
 ### Option 1: Vercel (Recommended)
@@ -165,27 +167,16 @@ Generates:
 - All files are minified and optimized
 
 ### Build Statistics
-- Total bundle size: ~183 KB JS + ~15 KB CSS
-- Gzipped: ~58 KB JS + ~3.5 KB CSS
-- Build time: ~3 seconds
+- Run `npm run build` and check `dist/` for actual sizes.
+- Vite minifies and tree-shakes; Tailwind purges unused CSS.
 
 ---
 
 ## Environment Variables
 
-### Development
-Create `.env` file (not needed for current version):
-```env
-VITE_APP_NAME=Trade Journal
-```
+No environment variables are required. Market data uses Binance public WebSocket streams (no API key). Trades are stored in the browser’s localStorage.
 
-Access in code:
-```typescript
-const appName = import.meta.env.VITE_APP_NAME
-```
-
-### Production
-Set environment variables in your hosting platform:
+If you add a backend later, you can use:
 - **Vercel**: Project Settings → Environment Variables
 - **Netlify**: Site Settings → Build & Deploy → Environment
 
@@ -261,6 +252,11 @@ npm run build
 - Check if hosting platform allows localStorage
 - Verify no Content Security Policy blocking storage
 - Test in incognito mode (extensions can block)
+
+### Live Market Data Not Updating
+- Binance WebSocket runs in the browser; no server config needed
+- Ensure the deployed site is served over HTTPS (WSS required)
+- Check browser console for WebSocket errors or CORS issues
 
 ### Styles Not Loading
 - Verify Tailwind config is correct
