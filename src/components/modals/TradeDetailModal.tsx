@@ -110,9 +110,16 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
       >
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-5 flex justify-between items-center rounded-t-xl">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-gray-900">
-              {trade.symbol} {trade.position}
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">{trade.symbol}</h2>
+            <span
+              className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded ${
+                trade.position === 'LONG'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}
+            >
+              {trade.position}
+            </span>
             <span
               className={`inline-block px-2.5 py-1 text-xs font-semibold rounded ${
                 trade.status === 'OPEN'
@@ -157,12 +164,26 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="rounded-lg p-4 bg-green-50">
+            <div
+              className={`rounded-lg p-4 ${
+                pnl != null
+                  ? pnl > 0
+                    ? 'bg-green-50'
+                    : pnl < 0
+                      ? 'bg-red-50'
+                      : 'bg-gray-50'
+                  : 'bg-gray-50'
+              }`}
+            >
               <div className="text-sm text-gray-500">PNL ($)</div>
               <div
                 className={`font-bold text-xl ${
                   pnl != null
-                    ? pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                    ? pnl > 0
+                      ? 'text-green-600'
+                      : pnl < 0
+                        ? 'text-red-600'
+                        : 'text-gray-600'
                     : 'text-gray-500'
                 }`}
               >
@@ -188,9 +209,9 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
           </div>
 
           {/* Price chart with entry/exit markers */}
-          <div>
+          <div className="min-w-0">
             <h3 className="text-lg font-semibold mb-2">Price Movement</h3>
-            <div className="h-64">
+            <div className="h-64 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -230,9 +251,10 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-gray-50/50 overflow-hidden">
-            <div className="flex justify-between items-center border-b border-gray-200 bg-white px-5 py-3">
-              <h3 className="text-base font-semibold text-gray-800">Notes & details</h3>
+          {/* Notes & details - same section pattern as Price Movement */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Notes & details</h3>
               {onUpdate && (
                 <button
                   type="button"
@@ -257,143 +279,145 @@ export const TradeDetailModal: React.FC<TradeDetailModalProps> = ({
                   }}
                   className={
                     isEditing
-                      ? 'rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700'
-                      : 'rounded-lg border border-violet-400 bg-transparent px-4 py-2 text-sm font-medium text-violet-600 hover:bg-violet-50'
+                      ? 'rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700'
+                      : 'rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
                   }
                 >
                   {isEditing ? 'Save' : 'Edit'}
                 </button>
               )}
             </div>
-            {isEditing ? (
-              <div className="p-5 space-y-5">
-                <div>
-                  <span className="block text-sm font-medium text-gray-700 mb-2">Status</span>
-                  <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setEditStatus('OPEN')}
-                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        editStatus === 'OPEN'
-                          ? 'bg-blue-600 text-white shadow'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      Open
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditStatus('CLOSED');
-                        if (editStatus === 'OPEN') setEditCloseTimestamp(Date.now());
-                      }}
-                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        editStatus === 'CLOSED'
-                          ? 'bg-blue-600 text-white shadow'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      Closed
-                    </button>
-                  </div>
-                </div>
-                {editStatus === 'CLOSED' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-200 bg-white p-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close price ($)</label>
-                      <input
-                        type="number"
-                        step="any"
-                        min={0}
-                        value={editClosePrice}
-                        onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v !== '' && parseFloat(v) < 0) return;
-                          setEditClosePrice(v);
+            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+              {isEditing ? (
+                <>
+                  <div>
+                    <div className="text-sm text-gray-500 mb-1.5">Status</div>
+                    <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditStatus('OPEN')}
+                        className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                          editStatus === 'OPEN'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        Open
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditStatus('CLOSED');
+                          if (editStatus === 'OPEN') setEditCloseTimestamp(Date.now());
                         }}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Close time (GMT)</label>
-                      <input
-                        type="datetime-local"
-                        value={toDateTimeLocalGMT(editCloseTimestamp)}
-                        onChange={(e) => setEditCloseTimestamp(fromDateTimeLocalGMT(e.target.value))}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      />
+                        className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                          editStatus === 'CLOSED'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        Closed
+                      </button>
                     </div>
                   </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes</label>
-                  <textarea
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
-                    placeholder="Add notes…"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tags</label>
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && tagInput.trim()) {
-                        setEditTags((t) => [...t, tagInput.trim()]);
-                        setTagInput('');
-                      }
-                    }}
-                    placeholder="Type a tag and press Enter"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-2"
-                  />
-                  {editTags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {editTags.map((tag) => (
+                  {editStatus === 'CLOSED' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-500 mb-1.5">Close price ($)</label>
+                        <input
+                          type="number"
+                          step="any"
+                          min={0}
+                          value={editClosePrice}
+                          onKeyDown={(e) => { if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); }}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v !== '' && parseFloat(v) < 0) return;
+                            setEditClosePrice(v);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-500 mb-1.5">Close time (GMT)</label>
+                        <input
+                          type="datetime-local"
+                          value={toDateTimeLocalGMT(editCloseTimestamp)}
+                          onChange={(e) => setEditCloseTimestamp(fromDateTimeLocalGMT(e.target.value))}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1.5">Notes</label>
+                    <textarea
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                      placeholder="Add notes…"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1.5">Tags</label>
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && tagInput.trim()) {
+                          setEditTags((t) => [...t, tagInput.trim()]);
+                          setTagInput('');
+                        }
+                      }}
+                      placeholder="Type a tag and press Enter"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-2"
+                    />
+                    {editTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {editTags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => setEditTags((t) => t.filter((x) => x !== tag))}
+                              className="rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900"
+                              aria-label={`Remove ${tag}`}
+                            >
+                              <span className="sr-only">Remove</span>
+                              <span aria-hidden>&times;</span>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {trade.notes || 'No notes.'}
+                  </p>
+                  {(trade.tags?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {trade.tags!.map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
+                          className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
                         >
                           {tag}
-                          <button
-                            type="button"
-                            onClick={() => setEditTags((t) => t.filter((x) => x !== tag))}
-                            className="rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900"
-                            aria-label={`Remove ${tag}`}
-                          >
-                            <span className="sr-only">Remove</span>
-                            <span aria-hidden>&times;</span>
-                          </button>
                         </span>
                       ))}
                     </div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="p-5">
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {trade.notes || 'No notes.'}
-                </p>
-                {(trade.tags?.length ?? 0) > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {trade.tags!.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
