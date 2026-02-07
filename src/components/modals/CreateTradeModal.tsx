@@ -7,6 +7,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Trade, TradeStatus } from '../constants/types';
 import { useCoins } from '../../hooks/useCoins';
+import { fetchTickerPrice } from '../../services/coinsService';
 import { toDateTimeLocalGMT, fromDateTimeLocalGMT } from '../../utils/calculations';
 import { SelectBox } from '../ui-components/SelectBox';
 
@@ -61,6 +62,31 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
   const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
   const tagsRef = useRef<HTMLDivElement>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [openPriceLoading, setOpenPriceLoading] = useState(false);
+
+  // When symbol changes, fetch current price and pre-fill Open Price
+  useEffect(() => {
+    if (!symbol?.trim()) return;
+    let cancelled = false;
+    setOpenPriceLoading(true);
+    fetchTickerPrice(symbol.trim())
+      .then((data) => {
+        if (!cancelled) {
+          setOpenPrice(data.price);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOpenPrice('');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setOpenPriceLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
 
   const addTagFromInput = () => {
     const trimmed = tagsInput.trim();
@@ -255,7 +281,7 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Open Price ($) *
+                Open Price ($) * {openPriceLoading && <span className="text-gray-400 font-normal">(fetching…)</span>}
               </label>
               <input
                 type="number"
@@ -268,7 +294,8 @@ export const CreateTradeModal: React.FC<CreateTradeModalProps> = ({
                   if (v !== '' && parseFloat(v) < 0) return;
                   setOpenPrice(v);
                 }}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                disabled={openPriceLoading}
+                className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-50 disabled:text-gray-600"
                 required
               />
             </div>
