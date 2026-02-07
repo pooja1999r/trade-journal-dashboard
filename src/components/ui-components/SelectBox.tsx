@@ -22,6 +22,7 @@ export interface SelectBoxBaseProps {
   className?: string;
   minWidth?: string;
   dropdownMinWidth?: string;
+  dropdownMaxHeight?: string;
   id?: string;
 }
 
@@ -62,6 +63,7 @@ export const SelectBox: React.FC<SelectBoxProps> = (props) => {
     className = '',
     minWidth = '140px',
     dropdownMinWidth,
+    dropdownMaxHeight = '15rem',
     id,
   } = props;
 
@@ -143,8 +145,13 @@ export const SelectBox: React.FC<SelectBoxProps> = (props) => {
       {isOpen && (
         <div
           role="listbox"
-          className="dropdown-panel-scroll absolute left-0 right-0 top-full z-50 mt-1 max-h-60 min-w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
-          style={dropdownMinWidth ? { minWidth: dropdownMinWidth } : undefined}
+          className="dropdown-panel-scroll absolute left-0 right-0 top-full z-50 mt-1 min-w-full rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          style={{
+            minWidth: dropdownMinWidth || undefined,
+            maxHeight: dropdownMaxHeight,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
         >
           {loading && (
             <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>

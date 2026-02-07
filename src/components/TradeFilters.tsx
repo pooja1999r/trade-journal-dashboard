@@ -34,7 +34,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
   }, [trades]);
 
   return (
-    <div className="sticky top-0 z-30 mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="sticky top-0 z-30 mb-6 overflow-visible rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-end gap-5">
         <SelectBox
           mode="single"
@@ -46,6 +46,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
           allowClear
           clearLabel="All"
           minWidth="120px"
+          dropdownMaxHeight="160px"
         />
 
         <SelectBox
@@ -94,6 +95,7 @@ export const TradeFilters: React.FC<TradeFiltersProps> = ({
           selectAllLabel="All tags"
           minWidth="180px"
           dropdownMinWidth="180px"
+          dropdownMaxHeight="160px"
         />
 
         <div className="min-w-[200px] flex-1">
