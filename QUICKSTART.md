@@ -14,7 +14,7 @@ npm run dev
 
 ## First Time Using the App?
 
-1. Click **"Load Demo Data"** to add sample trades (e.g. BTCUSDT, ETHUSDT, ETHBTC, LTCBTC, BNBBTC).
+1. Click **"Try sample list"** to add sample trades (e.g. BTCUSDT, ETHUSDT, ETHBTC, LTCBTC, BNBBTC).
 2. Watch the **Current Price** and **Daily %** columns update from Binance (live WebSocket).
 3. Click **"Create New Trade"** to add your own trade.
 4. Click a row to open the **Trade Detail** modal (chart, notes, tags).
@@ -55,19 +55,22 @@ npm run lint     # Run ESLint
 
 ```
 src/
-├── components/          # UI
-│   ├── TradeListPage.tsx   # Main page
-│   ├── TradeTable.tsx      # Table + market data columns
+├── components/            # UI
+│   ├── constants/           # types.ts, filterOptions.ts
+│   ├── ui-components/       # SelectBox
+│   ├── TradeListPage.tsx    # Main page
+│   ├── TradeTable.tsx       # Table + market data columns
 │   ├── TradeFilters.tsx
-│   └── modals/            # CreateTrade, TradeDetail, Confirm
+│   └── modals/              # CreateTrade, TradeDetail, Confirm
 ├── hooks/
-│   ├── useTrades.ts       # Trades + localStorage
-│   └── useMarketData.ts   # Binance WebSocket
+│   ├── useTrades.ts         # Trades + localStorage
+│   ├── useMarketData.ts     # Binance WebSocket
+│   └── useCoins.ts          # Symbol list for create form
 ├── services/
 │   ├── tradeStorageService.ts
-│   └── marketDataService.ts
-├── store/                 # Redux (optional slice)
-└── utils/                 # calculations, filters, storage
+│   ├── marketDataService.ts
+│   └── coinsService.ts
+└── utils/                  # calculations, tradeFilters, filterStorage
 ```
 
 ## Need Help?

@@ -46,7 +46,7 @@ The application emphasizes:
 - **Modals**
   - **Trade Detail**: Row click opens modal with trade summary and chart (Recharts)
   - **Create Trade**: Form for new trade
-  - **Confirm**: e.g. Load Demo Data
+  - **Confirm**: e.g. Try sample list, Delete
 
 ## 🛠️ Tech Stack
 
@@ -54,7 +54,6 @@ The application emphasizes:
 |------------|---------|
 | **React 18** | UI with functional components and hooks |
 | **TypeScript** | Type safety |
-| **Redux Toolkit** | Optional store (trade slice); main trade list uses `useTrades` + localStorage |
 | **Tailwind CSS** | Utility-first styling |
 | **Vite** | Build and dev server |
 | **Recharts** | Charts in trade detail modal |
@@ -66,36 +65,30 @@ src/
 ├── components/
 │   ├── constants/
 │   │   ├── types.ts        # Trade, MarketDataMap, filters
-│   │   └── tooltipInfo.ts
+│   │   └── filterOptions.ts
+│   ├── ui-components/
+│   │   └── SelectBox.tsx   # Reusable select dropdown
 │   ├── modals/
 │   │   ├── CreateTradeModal.tsx
 │   │   ├── TradeDetailModal.tsx
 │   │   └── ConfirmModal.tsx
 │   ├── TradeListPage.tsx   # Main page
 │   ├── TradeTable.tsx      # Table with market data columns
-│   ├── TradeFilters.tsx
-│   └── Header.tsx
+│   └── TradeFilters.tsx
 ├── hooks/
 │   ├── useTrades.ts        # Trade state + localStorage sync
 │   ├── useMarketData.ts    # Binance WebSocket subscription
-│   └── useCoins.ts         # Optional symbol list
+│   └── useCoins.ts         # Symbol list for create form
 ├── services/
 │   ├── tradeStorageService.ts   # localStorage (trade_journal_trades)
 │   ├── marketDataService.ts     # Binance WebSocket → MarketDataMap
-│   ├── binanceWebSocketService.ts # Low-level WS (callback + symbols)
 │   └── coinsService.ts          # Binance exchangeInfo (symbols)
-├── store/
-│   ├── store.ts
-│   ├── tradeSlice.ts
-│   ├── hooks.ts
-│   └── types.ts
 ├── utils/
 │   ├── calculations.ts    # PNL, duration, R-multiple
 │   ├── tradeFilters.ts
-│   ├── filterStorage.ts
-│   └── storage.ts
+│   └── filterStorage.ts
 ├── data/
-│   └── mockTrades.ts      # Demo trades (e.g. ETHBTC, LTCBTC, BTCUSDT)
+│   └── mockTrades.ts      # Sample trades (e.g. ETHBTC, LTCBTC, BTCUSDT)
 ├── App.tsx
 ├── main.tsx
 └── index.css
@@ -143,15 +136,15 @@ npm run preview
 - **OPEN**: Position still held (no close price/time).
 - **CLOSED**: Position closed (close price and close timestamp set).
 
-### Loading Demo Data
+### Try Sample List
 
-Click **"Load Demo Data"** to add sample trades (symbols include ETHBTC, LTCBTC, BNBBTC, BTCUSDT, ETHUSDT). Useful to see live market data in the table.
+Click **"Try sample list"** to add sample trades (symbols include ETHBTC, LTCBTC, BNBBTC, BTCUSDT, ETHUSDT). Useful to see live market data in the table.
 
 ## 🏗️ Architecture Notes
 
 - **Trades**: `useTrades` + `tradeStorageService` (localStorage). List is derived from storage; create/update/delete update storage and state.
 - **Market data**: `useMarketData(symbols)` uses `marketDataService.subscribeMarketData(symbols, callback)`. The service keeps a single WebSocket, accumulates ticker updates into a `MarketDataMap`, and calls the callback so the table re-renders with latest price and daily %.
-- **Types**: Trade and market data types live in `components/constants/types.ts`; store types in `store/types.ts`.
+- **Types**: Trade and market data types live in `components/constants/types.ts`.
 
 ## 🎯 Assumptions & Trade-offs
 

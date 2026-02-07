@@ -7,17 +7,17 @@ Trade Journal is a client-side React application for managing crypto trades with
 ## Architecture Principles
 
 ### 1. Separation of Concerns
-- **Components**: Presentation (TradeListPage, TradeTable, TradeFilters, modals)
-- **Hooks**: useTrades (state + localStorage), useMarketData (WebSocket subscription)
-- **Services**: tradeStorageService, marketDataService, binanceWebSocketService, coinsService
-- **Utils**: Pure helpers (calculations, filters, filterStorage, storage)
+- **Components**: Presentation (TradeListPage, TradeTable, TradeFilters, modals, ui-components)
+- **Hooks**: useTrades (state + localStorage), useMarketData (WebSocket), useCoins (symbol list)
+- **Services**: tradeStorageService, marketDataService, coinsService
+- **Utils**: Pure helpers (calculations, tradeFilters, filterStorage)
 
 ### 2. Data Flow
-- **Trades**: User action → hook (useTrades) → tradeStorageService → localStorage → state update → re-render
-- **Market data**: symbols from trades → useMarketData → marketDataService (WebSocket) → callback with MarketDataMap → state → TradeTable re-renders
+- **Trades**: User action → useTrades → tradeStorageService → localStorage → state update → re-render
+- **Market data**: Symbols from trades → useMarketData → marketDataService (WebSocket) → MarketDataMap → state → TradeTable re-renders
 
 ### 3. Type Safety
-Domain types live in `components/constants/types.ts` (Trade, MarketDataMap, filters). Store types in `store/types.ts`. TypeScript strict mode enabled.
+Domain types in `components/constants/types.ts` (Trade, MarketDataMap, filters, ConfirmModalVariant). Filter option constants in `components/constants/filterOptions.ts`. TypeScript strict mode enabled.
 
 ## Core Domain Model
 
@@ -67,16 +67,16 @@ MarketDataMap = { [symbol: string]: MarketSymbolData }
 
 ### Trades
 - **Source of truth**: localStorage key `trade_journal_trades`.
-- **Hook**: `useTrades()` returns `{ trades, addTrade, updateTrade, deleteTrade, loadTrades }`. Reads/writes go through `tradeStorageService`.
-- **Symbols**: Derived from trades; `tradeStorageService.getUniqueSymbols(trades)` drives market data subscription.
+- **Hook**: useTrades() returns { trades, addTrade, updateTrade, deleteTrade, loadTrades }. Reads/writes via tradeStorageService.
+- **Symbols**: Derived from trades; tradeStorageService.getUniqueSymbols(trades) drives market data subscription.
 
 ### Market Data
-- **Source**: Binance WebSocket (`wss://stream.binance.com:9443/stream?streams=...`).
-- **Hook**: `useMarketData(symbols, reconnectTrigger)` returns `{ data: MarketDataMap, isLoading, error }`.
-- **Service**: `marketDataService.subscribeMarketData(symbols, callback)` keeps one WebSocket, maps ticker payloads to `MarketSymbolData`, accumulates into a `MarketDataMap`, and invokes the callback so the table updates.
+- **Source**: Binance WebSocket (wss://stream.binance.com:9443/stream).
+- **Hook**: useMarketData(symbols, reconnectTrigger) returns { data: MarketDataMap, isLoading, error }.
+- **Service**: marketDataService.subscribeMarketData(symbols, callback) keeps one WebSocket, maps ticker payloads to MarketSymbolData, accumulates into MarketDataMap, and invokes the callback.
 
 ### Filters
-- Stored in localStorage via `filterStorage` (loadFilters, saveFilters). Applied in memory in TradeListPage (filterTrades, sortTradesByOpenTimestamp).
+- Stored in localStorage via filterStorage (loadFilters, saveFilters). Applied in memory in TradeListPage (filterTrades, sortTradesByOpenTimestamp).
 
 ## Component Architecture
 
@@ -84,20 +84,22 @@ MarketDataMap = { [symbol: string]: MarketSymbolData }
 ```
 App
 └── TradeListPage
-    ├── Header (Create New Trade, Load Demo Data)
-    ├── TradeFilters
+    ├── Header (inline: title, Try sample list, Create New Trade)
+    ├── TradeFilters (uses SelectBox, filterOptions)
     ├── TradeTable (trades + marketData)
     ├── TradeDetailModal (on row click)
     ├── CreateTradeModal
-    └── ConfirmModal (e.g. Load Demo)
+    └── ConfirmModal (e.g. Try sample list, Delete)
 ```
 
 ### Responsibilities
 - **TradeListPage**: Orchestrates useTrades, useMarketData, filters, modals; passes filtered trades and marketData to TradeTable.
-- **TradeTable**: Renders table; uses marketData[trade.symbol] for current price and daily %.
-- **TradeFilters**: Filter UI; calls onFiltersChange; filters persisted by TradeListPage.
-- **CreateTradeModal**: Form for new trade; onSubmit calls addTrade and can trigger WebSocket reconnect.
-- **TradeDetailModal**: Shows trade details, chart (Recharts), editable notes/tags; onUpdate calls updateTrade.
+- **TradeTable**: Renders table; uses marketData[trade.symbol] for current price and daily %; sticky columns, selection.
+- **TradeFilters**: Filter UI using SelectBox (symbol, position, status, entry, tags); search notes; calls onFiltersChange.
+- **SelectBox** (ui-components): Reusable single/multi select dropdown; used in TradeFilters and CreateTradeModal.
+- **CreateTradeModal**: Form for new trade; symbol from useCoins; onSubmit calls addTrade and can trigger WebSocket reconnect.
+- **TradeDetailModal**: Trade summary, chart (Recharts), editable notes/tags/status; onUpdate calls updateTrade.
+- **ConfirmModal**: Title + close button; variant (default/danger/warning) only affects confirm button color.
 
 ## Data Flow Examples
 
@@ -109,7 +111,7 @@ App
 
 ### Live Market Data
 1. TradeListPage gets symbols from trades → useMarketData(symbols).
-2. useMarketData calls subscribeMarketData(symbols, callback).
+2. useMarketData calls marketDataService.subscribeMarketData(symbols, callback).
 3. marketDataService opens WebSocket to Binance combined stream, accumulates messages into dataMap, calls callback({ ...dataMap }).
 4. Hook setState → TradeListPage re-renders → TradeTable receives new marketData → current price and daily % cells update.
 
@@ -119,30 +121,26 @@ App
 |--------|------|
 | **tradeStorageService** | getAll(), save(), getUniqueSymbols(); key `trade_journal_trades` |
 | **marketDataService** | subscribeMarketData(symbols, callback) → WebSocket, MarketDataMap callback, cleanup |
-| **binanceWebSocketService** | Low-level createBinanceWebSocket(symbols, callback) for raw stream messages |
-| **coinsService** | fetchCoinsList() from Binance exchangeInfo (optional symbol list) |
+| **coinsService** | fetchCoinsList() from Binance exchangeInfo (symbol list for CreateTradeModal) |
 
 ## Calculations (utils/calculations.ts)
 
 - **PNL**: By position (LONG/SHORT), open/close price, quantity.
 - **Duration**: formatDuration(openTimestamp, closeTimestamp).
 - **R-multiple**: PNL and risk from open price, stop loss, quantity.
+- **Timestamps**: formatTimestampGMT, toDateTimeLocalGMT, fromDateTimeLocalGMT for GMT display and inputs.
 
 ## Styling
 
 - **Tailwind**: Utility classes; responsive where needed.
-- **Conventions**: Green (long/buy), red (short/sell), blue (primary/actions), gray (secondary).
+- **Conventions**: Green (long/buy), red (short/sell), blue (primary/actions), gray (secondary). PNL: green profit, red loss, gray zero.
 
 ## Build & Deployment
 
 - **Dev**: `npm run dev` (Vite HMR).
-- **Build**: `npm run build` (tsc + vite build) → `dist/`.
+- **Build**: `npm run build` (tsc + vite build) → dist/.
 - **Preview**: `npm run preview`.
 - Deploy as static site; see DEPLOYMENT.md. No env vars required for Binance market data.
-
-## Redux Store (Optional / Legacy)
-
-The app includes a Redux store and tradeSlice (store/tradeSlice.ts, store/types.ts) with a Trade model that uses buyLegs/sellLegs. The main trade list and persistence are implemented with **useTrades + tradeStorageService** and the flat Trade type from components/constants/types.ts. The store can be used for other global state or refactored to be the single source of truth if desired.
 
 ## Security and Limitations
 
@@ -153,8 +151,9 @@ The app includes a Redux store and tradeSlice (store/tradeSlice.ts, store/types.
 
 ## Extensibility
 
-- **New trade field**: Add to Trade in components/constants/types.ts, CreateTradeModal, TradeTable, TradeDetailModal, mockTrades.
+- **New trade field**: Add to Trade in types.ts, CreateTradeModal, TradeTable, TradeDetailModal, mockTrades.
 - **New calculation**: Add to utils/calculations.ts and use in table or modal.
+- **New filter option**: Add to filterOptions.ts and use in TradeFilters SelectBox.
 - **New market source**: Implement same callback contract as marketDataService (symbols → callback(MarketDataMap)) and swap in useMarketData.
 
 ## Dependencies
@@ -163,9 +162,8 @@ The app includes a Redux store and tradeSlice (store/tradeSlice.ts, store/types.
 |---------|---------|
 | React | UI |
 | TypeScript | Types |
-| Redux Toolkit | Optional store |
 | Tailwind | Styling |
 | Vite | Build and dev server |
 | Recharts | Charts in TradeDetailModal |
 
-For more on setup and usage, see README.md and QUICKSTART.md.
+For setup and usage, see README.md and QUICKSTART.md.

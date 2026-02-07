@@ -189,7 +189,7 @@ If you add a backend later, you can use:
 - [ ] Check all features work in production mode
 - [ ] Verify responsive design on mobile
 - [ ] Test in different browsers
-- [ ] Ensure demo data loads correctly
+- [ ] Ensure sample list / demo data loads correctly
 - [ ] Confirm localStorage persistence works
 - [ ] Review console for any warnings/errors
 
@@ -199,7 +199,7 @@ If you add a backend later, you can use:
 
 1. **Test the deployed app**
    - Create a trade
-   - Load demo data
+   - Try sample list (add sample trades)
    - Verify localStorage works
    - Test on mobile device
 
